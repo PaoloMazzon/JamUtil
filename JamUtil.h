@@ -8,15 +8,16 @@
 /********************** Typedefs **********************/
 typedef struct JUCharacter JUCharacter;
 typedef struct JUFont *JUFont;
-typedef struct JUAsset JUAsset;
+typedef struct JUAsset *JUAsset;
 typedef struct JULoader *JULoader;
 
 /********************** Enums **********************/
 typedef enum {
-	JU_ASSET_TYPE_FONT,
-	JU_ASSET_TYPE_TEXTURE,
-	JU_ASSET_TYPE_SOUND,
-	JU_ASSET_TYPE_MAX,
+	JU_ASSET_TYPE_NONE = 0, // Specifically for checking if there is an asset at all
+	JU_ASSET_TYPE_FONT = 1,
+	JU_ASSET_TYPE_TEXTURE = 2,
+	JU_ASSET_TYPE_SOUND = 3,
+	JU_ASSET_TYPE_MAX = 4,
 } JUAssetType;
 
 /********************** Font **********************/
@@ -81,7 +82,6 @@ struct JUAsset {
 /// \brief Stores, loads, and frees many assets at once
 struct JULoader {
 	JUAsset *assets; ///< Bucket of assets
-	uint32_t bucketSize; ///< Size in elements of the asset bucket
 };
 
 /// \brief Creates an asset loader, loading all the specified files
