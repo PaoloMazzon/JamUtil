@@ -84,6 +84,23 @@ struct JULoader {
 	uint32_t bucketSize; ///< Size in elements of the asset bucket
 };
 
+/// \brief Creates an asset loader, loading all the specified files
+/// \param files List of files to load, their filenames will be their key
+/// \param fileCount Number of files that will be loaded
+/// \return Returns a new JULoader or NULL
+JULoader juLoaderCreate(const char **files, uint32_t fileCount);
+
+/// \brief Gets a texture from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+VK2DTexture juLoaderGetTexture(JULoader loader, const char *filename);
+
+/// \brief Gets a texture from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+JUFont juLoaderGetFont(JULoader loader, const char *filename);
+
+/// \brief Frees a JULoader and all the assets it loaded
+void juLoaderFree(JULoader loader);
+
 /********************** Math/Physics **********************/
 // TODO: This
 
