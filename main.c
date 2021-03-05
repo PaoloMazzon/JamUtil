@@ -6,9 +6,11 @@ const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
 const char *FILES[] = {
-
+		"assets/image1.png",
+		"assets/image2.png",
+		"assets/image3.png",
 };
-const uint32_t FILE_COUNT = 0;
+const uint32_t FILE_COUNT = 3;
 
 int main() {
 	SDL_Window *window = SDL_CreateWindow("VK2D", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN);
@@ -29,6 +31,7 @@ int main() {
 		vk2dRendererStartFrame(clearColour);
 
 		// Draw your things
+		vk2dDrawTexture(juLoaderGetTexture(loader, "assets/image1.png"), 0, 0);
 
 		vk2dRendererEndFrame();
 	}

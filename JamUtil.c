@@ -154,11 +154,12 @@ JULoader juLoaderCreate(const char **files, uint32_t fileCount) {
 
 	// Load all assets
 	for (int i = 0; i < fileCount; i++) {
-		const char *extension = files[i] + juLastDot(files[i]);
+		const char *extension = files[i] + juLastDot(files[i]) + 1;
 		JUAsset asset = juMalloc(sizeof(struct JUAsset));
+		asset->name = juCopyString(files[i]);
+		asset->next = NULL;
 
 		// Load file based on asset
-		asset->name = juCopyString(files[i]);
 		if (strcmp(extension, "jufnt") == 0) {
 			asset->type = JU_ASSET_TYPE_FONT;
 			asset->Asset.font = juFontLoad(files[i]);
