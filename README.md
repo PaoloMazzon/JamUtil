@@ -4,11 +4,16 @@ JamUtil is a very simple little framework meant to be used on top of [Vulkan2D](
 with the purpose being use in game jams. These tools are not the best in class, they are just
 easy to use on top of VK2D since game jams have very limited time.
 
+Features
+========
+
+ + Asset loader to easily load and free many resources at once
+
 Planned Features
 ================
 
  + Audio library
- + Asset management for textures and audio
+ + Bitmap fonts
  + Basic game math/physics
  + Some collisions
  
