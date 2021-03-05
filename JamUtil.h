@@ -39,7 +39,7 @@ struct JUFont {
 	VK2DTexture bitmap;      ///< Bitmap of the characters
 };
 
-/// \brief Loads a font from a .jufont file (create them with the python script)
+/// \brief Loads a font from a .jufnt file (create them with the python script)
 /// \return Returns a new font or NULL if it failed
 JUFont juFontLoad(const char *filename);
 
@@ -70,7 +70,7 @@ void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, 
 struct JUAsset {
 	JUAssetType type; ///< Type of asset this is
 	const char *name; ///< Name of this asset for bucket collision checking
-	JUAsset *next;    ///< Next asset in this slot should there be a hash collision
+	JUAsset next;     ///< Next asset in this slot should there be a hash collision
 
 	union {
 		VK2DTexture tex; ///< Texture bound to this asset
@@ -97,6 +97,10 @@ VK2DTexture juLoaderGetTexture(JULoader loader, const char *filename);
 /// \brief Gets a texture from the loader
 /// \return Returns the requested asset or NULL if it doesn't exist
 JUFont juLoaderGetFont(JULoader loader, const char *filename);
+
+/// \brief Gets a sound from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+JUFont juLoaderGetSound(JULoader loader, const char *filename);
 
 /// \brief Frees a JULoader and all the assets it loaded
 void juLoaderFree(JULoader loader);

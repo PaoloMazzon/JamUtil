@@ -17,9 +17,9 @@ Usage
 This is meant to be used the same way Vulkan2D is, in that you just add it as a submodule
 and include the few files in your CMake manually.
 
-.jufont File
+.jufnt File
 ============
-In order with no padding, this is the binary file format `.jufont`.
+In order with no padding, this is the binary file format `.jufnt`.
 
  + 5 bytes at the top that just say `JUFNT`
  + 4 bytes representing the size in bytes of the png at the bottom
