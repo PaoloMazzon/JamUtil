@@ -114,7 +114,7 @@ static uint8_t *juGetFile(const char *filename, uint32_t *size) {
 			fgetc(file);
 			len++;
 		}
-		len--;
+		//len--;
 		*size = len;
 		buffer = juMalloc(len);
 		rewind(file);
@@ -147,7 +147,18 @@ static JUBinaryFont juLoadBinaryFont(const char *file, bool *error) {
 
 		// We now have enough data to calculate the total size the file should be
 		if (size == 13 + font.size + (font.characters * 4)) {
-			// TODO: This
+			font.characterDimensions = juMalloc(font.characters * sizeof(struct JUBinaryCharacter));
+			font.png = juMalloc(font.size);
+
+			// Grab all the characters
+			for (int i = 0; i < font.characters; i++) {
+				juCopyFromBigEndian(&font.characterDimensions[i].width, buffer + pointer, 2);
+				pointer += 2;
+				juCopyFromBigEndian(&font.characterDimensions[i].height, buffer + pointer, 2);
+				pointer += 2;
+			}
+
+			memcpy(&font.png, buffer + pointer, font.size);
 		} else {
 			juLog("jufnt file \"%s\" is unreadable", file);
 		}
@@ -168,6 +179,10 @@ JUFont juFontLoad(const char *filename) {
 
 	if (!error) {
 		// TODO: This
+
+
+		free(binaryFont.png);
+		free(binaryFont.characterDimensions);
 	}
 
 	return font;
