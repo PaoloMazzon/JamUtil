@@ -61,9 +61,21 @@ JUFont juFontLoadFromImage(const char *image, uint32_t unicodeStart, uint32_t un
 void juFontFree(JUFont font);
 
 /// \brief Draws a font to the screen (supports all printf % things)
+///
+/// Since this uses Vulkan2D to draw the current colour of the VK2D
+/// renderer is used.
+///
+/// vsprintf is used internally, so any and all printf % operators work
+/// in this. Newlines (\n) are also allowed.
 void juFontDraw(JUFont font, float x, float y, const char *fmt, ...);
 
 /// \brief Draws a font to the screen, wrapping every w pixels (supports all printf % things)
+///
+/// Since this uses Vulkan2D to draw the current colour of the VK2D
+/// renderer is used.
+///
+/// vsprintf is used internally, so any and all printf % operators work
+/// in this. Newlines (\n) are also allowed.
 void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, ...);
 
 /********************** Asset Manager **********************/

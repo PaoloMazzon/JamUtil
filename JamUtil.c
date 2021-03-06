@@ -247,24 +247,65 @@ void juFontFree(JUFont font) {
 }
 
 void juFontDraw(JUFont font, float x, float y, const char *fmt, ...) {
+	// Var args stuff
 	char buffer[JU_STRING_BUFFER];
 	va_list va;
 	va_start(va, fmt);
 	vsprintf(buffer, fmt, va);
 	va_end(va);
+
+	// Information needed to draw the text
+	float startX = x;
 	int len = strlen(buffer);
+
+	// Loop through each character and render individually
 	for (int i = 0; i < len; i++) {
 		if (font->unicodeStart <= buffer[i] && font->unicodeEnd > buffer[i]) {
 			JUCharacter *c = &font->characters[buffer[i] - font->unicodeStart];
+
+			// Move to the next line if we're about to go over
+			if (buffer[i] == '\n') {
+				x = startX;
+				y += font->newLineHeight;
+			}
+
+			// Draw character (or not) and move the cursor forward
 			if (c->drawn)
 				vk2dRendererDrawTexture(font->bitmap, x, y, 1, 1, 0, 0, 0, c->x, c->y, c->w, c->h);
-			x += c->w;
+			if (buffer[i] != '\n') x += c->w;
 		}
 	}
 }
 
 void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, ...) {
-	// TODO: This
+	// Var args stuff
+	char buffer[JU_STRING_BUFFER];
+	va_list va;
+	va_start(va, fmt);
+	vsprintf(buffer, fmt, va);
+	va_end(va);
+
+	// Information needed to draw the text
+	float startX = x;
+	int len = strlen(buffer);
+
+	// Loop through each character and render individually
+	for (int i = 0; i < len; i++) {
+		if (font->unicodeStart <= buffer[i] && font->unicodeEnd > buffer[i]) {
+			JUCharacter *c = &font->characters[buffer[i] - font->unicodeStart];
+
+			// Move to the next line if we're about to go over
+			if ((c->w + x) - startX > w || buffer[i] == '\n') {
+				x = startX;
+				y += font->newLineHeight;
+			}
+
+			// Draw character (or not) and move the cursor forward
+			if (c->drawn)
+				vk2dRendererDrawTexture(font->bitmap, x, y, 1, 1, 0, 0, 0, c->x, c->y, c->w, c->h);
+			if (buffer[i] != '\n') x += c->w;
+		}
+	}
 }
 
 /********************** Asset Loader **********************/
