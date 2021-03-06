@@ -8,6 +8,7 @@
 /********************** Constants **********************/
 const uint32_t JU_BUCKET_SIZE = 100; // A good size for a small jam game, feel free to adjust
 const uint32_t JU_BINARY_FONT_HEADER_SIZE = 13; // Size of the header of jufnt files
+const uint32_t JU_STRING_BUFFER = 1024; // Maximum amount of text that can be rendered at once, a kilobyte is good for most things
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 uint32_t RMASK = 0xff000000;
@@ -195,10 +196,6 @@ JUFont juFontLoad(const char *filename) {
 	if (!error) {
 		// Create an SDL surface for the png
 		int w, h, channels;
-		FILE *file = fopen("test.png", "wb");
-		fwrite(binaryFont.png, binaryFont.size-1, 1, file);
-		fflush(file);
-		fclose(file);
 		void *pixels = stbi_load_from_memory(binaryFont.png, binaryFont.size, &w, &h, &channels, 4);
 
 		if (pixels != NULL) {
@@ -213,6 +210,7 @@ JUFont juFontLoad(const char *filename) {
 			font->unicodeStart = 1;
 			font->unicodeEnd = binaryFont.characters + 1;
 			font->characters = juMalloc(sizeof(struct JUCharacter) * binaryFont.characters);
+			font->newLineHeight = 0;
 
 			// Load the characters
 			int x = 0;
@@ -221,7 +219,10 @@ JUFont juFontLoad(const char *filename) {
 				font->characters[i].y = 0;
 				font->characters[i].w = binaryFont.characterDimensions[i].width;
 				font->characters[i].h = binaryFont.characterDimensions[i].height;
+				if (font->newLineHeight < font->characters[i].h)
+					font->newLineHeight = font->characters[i].h;
 				x += binaryFont.characterDimensions[i].width;
+				font->characters[i].drawn = i > 32;
 			}
 		} else {
 			juLog("Failed to load font's image");
@@ -248,7 +249,20 @@ void juFontFree(JUFont font) {
 }
 
 void juFontDraw(JUFont font, float x, float y, const char *fmt, ...) {
-	// TODO: This
+	char buffer[JU_STRING_BUFFER];
+	va_list va;
+	va_start(va, fmt);
+	vsprintf(buffer, fmt, va);
+	va_end(va);
+	int len = strlen(buffer);
+	for (int i = 0; i < len; i++) {
+		if (font->unicodeStart <= buffer[i] && font->unicodeEnd > buffer[i]) {
+			JUCharacter *c = &font->characters[buffer[i] - font->unicodeStart];
+			if (c->drawn)
+				vk2dRendererDrawTexture(font->bitmap, x, y, 1, 1, 0, 0, 0, c->x, c->y, c->w, c->h);
+			x += c->w;
+		}
+	}
 }
 
 void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, ...) {

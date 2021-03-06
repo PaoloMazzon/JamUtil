@@ -35,6 +35,7 @@ struct JUCharacter {
 struct JUFont {
 	uint32_t unicodeStart;   ///< Code point of the first character in the image (inclusive)
 	uint32_t unicodeEnd;     ///< Code point of the last character in the image (exclusive)
+	float newLineHeight;     ///< Height of a newline (calculated as the max character height)
 	JUCharacter *characters; ///< Vector of characters
 	VK2DTexture bitmap;      ///< Bitmap of the characters
 	VK2DImage image;         ///< Bitmap image in case it was loaded from a jufnt

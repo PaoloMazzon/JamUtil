@@ -33,6 +33,7 @@ int main() {
 
 		// Draw your things
 		vk2dDrawTexture(juLoaderGetTexture(loader, "assets/image1.png"), 0, 0);
+		juFontDraw(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 32, "Hello, World!");
 
 		vk2dRendererEndFrame();
 	}
