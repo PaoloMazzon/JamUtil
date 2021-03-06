@@ -234,7 +234,43 @@ JUFont juFontLoad(const char *filename) {
 }
 
 JUFont juFontLoadFromImage(const char *image, uint32_t unicodeStart, uint32_t unicodeEnd, float w, float h) {
-	// TODO: This
+	// Setup font struct
+	JUFont font = juMalloc(sizeof(struct JUFont));
+	font->characters = juMalloc(sizeof(struct JUCharacter) * (unicodeEnd - unicodeStart));
+	font->bitmap = vk2dTextureLoad(image);
+	font->image = NULL;
+	font->newLineHeight = h;
+	font->unicodeStart = unicodeStart;
+	font->unicodeEnd = unicodeEnd;
+
+	// Make sure the texture loaded and the texture has enough space to load the desired characters
+	if (font->bitmap != NULL && w * h * (unicodeEnd - unicodeStart) <= font->bitmap->img->width * font->bitmap->img->height) {
+		// Calculate positions of every character in the font
+		float x = 0;
+		float y = 0;
+		int i = unicodeStart;
+		while (i < unicodeEnd) {
+			font->characters[i - unicodeStart].x = x;
+			font->characters[i - unicodeStart].y = y;
+			font->characters[i - unicodeStart].w = w;
+			font->characters[i - unicodeStart].h = h;
+			if (x + w >= font->bitmap->img->width) {
+				y += h;
+				x = 0;
+			} else {
+				x += w;
+			}
+			i++;
+		}
+	} else {
+		juLog("Failed to load texture \"%s\"", image);
+		vk2dTextureFree(font->bitmap);
+		free(font->characters);
+		free(font);
+		font = NULL;
+	}
+
+	return font;
 }
 
 void juFontFree(JUFont font) {
