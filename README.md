@@ -8,12 +8,12 @@ Features
 ========
 
  + Asset loader to easily load and free many resources at once
+ + Simple bitmap fonts, monospaced and automatically generated
 
 Planned Features
 ================
 
  + Audio library
- + Bitmap fonts
  + Basic game math/physics
  + Some collisions
  
@@ -36,9 +36,11 @@ fonts super easy to deal with. In order to use a jufnt file,
 That's it. The Python script will take the ttf font and turn it into a bitmap font, also storing
 the size of each character as to allow for non-mono-spaced bitmap fonts. Furthermore, no other
 files are required to load the font other than the jufnt file as it stores the image and all
-character sizes. See below for the binary file format.
+character sizes. See below for the binary file format if you wish.
 
-Also you can just manually load images as bitmap fonts too, this is just a fancy feature.
+Also you can just manually load images as bitmap fonts too, this is meant to easily create bitmap
+fonts as it can often take a bit of time to manually create a bitmap font, especially when its
+not mono-spaced.
 
 .jufnt File Format
 ==================
