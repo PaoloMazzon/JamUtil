@@ -220,7 +220,7 @@ JUFont juFontLoad(const char *filename) {
 				if (font->newLineHeight < font->characters[i].h)
 					font->newLineHeight = font->characters[i].h;
 				x += binaryFont.characterDimensions[i].width;
-				font->characters[i].drawn = i > 32;
+				font->characters[i].drawn = i >= 32;
 			}
 		} else {
 			juLog("Failed to load font's image");

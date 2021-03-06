@@ -32,8 +32,8 @@ int main() {
 		vk2dRendererStartFrame(clearColour);
 
 		// Draw your things
-		vk2dDrawTexture(juLoaderGetTexture(loader, "assets/image1.png"), 0, 0);
-		juFontDraw(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 32, "Hello, World!");
+		vk2dDrawTextureExt(juLoaderGetTexture(loader, "assets/image1.png"), 400, 300, 5, 5, 0, 0, 0);
+		juFontDrawWrapped(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 0, 800, "The quick brown fox jumps over the lazy dog!?@#$%^&*()_+");
 
 		vk2dRendererEndFrame();
 	}
