@@ -88,6 +88,9 @@ struct JULoader {
 /// \param files List of files to load, their filenames will be their key
 /// \param fileCount Number of files that will be loaded
 /// \return Returns a new JULoader or NULL
+///
+/// What type of asset is trying to be loaded will be discerned by its extension.
+/// Supported extensions are jpg, png, bmp, ogg, wav, mp3, and jufnt
 JULoader juLoaderCreate(const char **files, uint32_t fileCount);
 
 /// \brief Gets a texture from the loader

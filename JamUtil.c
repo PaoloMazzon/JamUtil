@@ -1,11 +1,27 @@
 /// \file JamUtil.c
 /// \author Paolo Mazzon
-#include "JamUtil.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include "JamUtil.h"
 
 /********************** Constants **********************/
 const uint32_t JU_BUCKET_SIZE = 100; // A good size for a small jam game, feel free to adjust
+
+/********************** "Private" Structs **********************/
+
+/// \brief Character dimensions in the jufnt file
+typedef struct JUBinaryCharacter {
+	uint16_t width;  ///< Width of the character
+	uint16_t height; ///< Height of the character
+} JUBinaryCharacter;
+
+/// \brief This is an unpacked representation of a binary jufnt file
+typedef struct JUBinaryFont {
+	uint32_t size;                          ///< Size in bytes of the png
+	uint32_t characters;                    ///< Total number of characters in the font
+	JUBinaryCharacter *characterDimensions; ///< Vector of jufnt characters
+	void *png;                              ///< Raw bytes for the png image
+} JUBinaryFont;
 
 /********************** Static Functions **********************/
 
@@ -71,10 +87,29 @@ static const char *juCopyString(const char *string) {
 	return out;
 }
 
+// Swaps bytes between little and big endian
+static void juSwapEndian(void *bytes, uint32_t size) {
+	uint8_t new[size];
+	memcpy(new, bytes, size);
+	for (uint32_t i = size - 1; i >= 0; i--)
+		((uint8_t*)bytes)[i] = new[size - i - 1];
+}
+
+// Loads all jufnt data into a struct
+static JUBinaryFont juLoadBinaryFont(const char *file) {
+	JUBinaryFont font = {};
+	return font; // TODO: This
+}
+
 /********************** Font **********************/
 
 JUFont juFontLoad(const char *filename) {
+	JUFont font = juMalloc(sizeof(struct JUFont));
+	JUBinaryFont binaryFont = juLoadBinaryFont(filename);
+
 	// TODO: This
+
+	return font;
 }
 
 JUFont juFontLoadFromImage(const char *image, uint32_t unicodeStart, uint32_t unicodeEnd, float w, float h) {
@@ -163,7 +198,7 @@ JULoader juLoaderCreate(const char **files, uint32_t fileCount) {
 		if (strcmp(extension, "jufnt") == 0) {
 			asset->type = JU_ASSET_TYPE_FONT;
 			asset->Asset.font = juFontLoad(files[i]);
-		} else if (strcmp(extension, "png") == 0 || strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0) {
+		} else if (strcmp(extension, "png") == 0 || strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0 || strcmp(extension, "bmp") == 0) {
 			asset->type = JU_ASSET_TYPE_TEXTURE;
 			asset->Asset.tex = vk2dTextureLoad(files[i]);
 		} else if (strcmp(extension, "wav") == 0 || strcmp(extension, "ogg") == 0 || strcmp(extension, "mp3") == 0) {

@@ -9,6 +9,7 @@ const char *FILES[] = {
 		"assets/image1.png",
 		"assets/image2.png",
 		"assets/image3.png",
+		"assets/comic.jufnt"
 };
 const uint32_t FILE_COUNT = 3;
 
