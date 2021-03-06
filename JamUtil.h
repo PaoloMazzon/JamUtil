@@ -4,12 +4,14 @@
 #pragma once
 #include <stdbool.h>
 #include <VK2D/VK2D.h>
+#include "cute_sound.h"
 
 /********************** Typedefs **********************/
 typedef struct JUCharacter JUCharacter;
 typedef struct JUFont *JUFont;
 typedef struct JUAsset *JUAsset;
 typedef struct JULoader *JULoader;
+typedef struct JUSound *JUSound;
 
 /********************** Enums **********************/
 typedef enum {
@@ -19,6 +21,15 @@ typedef enum {
 	JU_ASSET_TYPE_SOUND = 3,
 	JU_ASSET_TYPE_MAX = 4,
 } JUAssetType;
+
+/********************** Top-Level **********************/
+
+/// \brief Initializes everything, make sure to call this before anything else
+/// \param window Window that is used
+void juInit(SDL_Window *window);
+
+/// \brief Frees all resources, call at the end of the program
+void juClose();
 
 /********************** Font **********************/
 
@@ -122,8 +133,32 @@ JUFont juLoaderGetSound(JULoader loader, const char *filename);
 /// \brief Frees a JULoader and all the assets it loaded
 void juLoaderFree(JULoader loader);
 
-/********************** Math/Physics **********************/
-// TODO: This
-
 /********************** Audio **********************/
+
+/// \brief A sound to be soundInfo
+struct JUSound {
+	cs_loaded_sound_t sound;
+	cs_play_sound_def_t soundInfo;
+	cs_playing_sound_t *playingSound;
+};
+
+/// \brief Loads a sound from a file into memory
+JUSound juSoundLoad(const char *filename);
+
+/// \brief Plays a sound
+void juSoundPlay(JUSound sound, bool loop, float volumeLeft, float volumeRight);
+
+/// \brief Change the properties of a currently playing sound
+void juSoundUpdate(JUSound sound, bool loop, float volumeLeft, float volumeRight);
+
+/// \brief Stops a sound if its currently playing
+void juSoundStop(JUSound sound);
+
+/// \brief Frees a sound from memory
+void juSoundFree(JUSound sound);
+
+/// \brief Stops all currently playing sounds
+void juSoundStopAll();
+
+/********************** Math/Physics **********************/
 // TODO: This

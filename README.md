@@ -16,6 +16,7 @@ Planned Features
  + Audio library
  + Basic game math/physics
  + Some collisions
+ + Simple file I/O
  
 Usage
 =====

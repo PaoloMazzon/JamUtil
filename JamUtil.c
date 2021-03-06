@@ -2,8 +2,12 @@
 /// \author Paolo Mazzon
 #include <stdio.h>
 #include <stdarg.h>
+#include <VK2D/stb_image.h>
+#include <SDL2/SDL_syswm.h>
+
+#define CUTE_SOUND_IMPLEMENTATION
+#include "cute_sound.h"
 #include "JamUtil.h"
-#include "VK2D/stb_image.h"
 
 /********************** Constants **********************/
 const uint32_t JU_BUCKET_SIZE = 100; // A good size for a small jam game, feel free to adjust
@@ -22,6 +26,9 @@ uint32_t BMASK = 0x00ff0000;
 uint32_t AMASK = 0xff000000;
 #endif
 
+/********************** Globals **********************/
+cs_context_t *gSoundContext = NULL;
+
 /********************** "Private" Structs **********************/
 
 /// \brief Character dimensions in the jufnt file
@@ -37,6 +44,27 @@ typedef struct JUBinaryFont {
 	JUBinaryCharacter *characterDimensions; ///< Vector of jufnt characters
 	void *png;                              ///< Raw bytes for the png image
 } JUBinaryFont;
+
+/********************** Top-Level **********************/
+
+static void juLog(const char *out, ...);
+void juInit(SDL_Window *window) {
+	SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version)
+	SDL_GetWindowWMInfo(window, &wmInfo);
+	HWND hwnd = wmInfo.info.win.window;
+	gSoundContext = cs_make_context(hwnd, 41000, 1024 * 1024 * 10, 20, NULL);
+	if (gSoundContext != NULL) {
+		cs_spawn_mix_thread(gSoundContext);
+	} else {
+		juLog("Failed to initialize sound.");
+	}
+}
+
+void juClose() {
+	cs_shutdown_context(gSoundContext);
+	gSoundContext = NULL;
+}
 
 /********************** Static Functions **********************/
 
@@ -490,4 +518,42 @@ void juLoaderFree(JULoader loader) {
 		}
 		free(loader->assets);
 	}
+}
+
+/********************** Sound **********************/
+
+JUSound juSoundLoad(const char *filename) {
+	JUSound sound = juMallocZero(sizeof(struct JUSound));
+	sound->sound = cs_load_wav(filename);
+	return sound;
+}
+
+void juSoundPlay(JUSound sound, bool loop, float volumeLeft, float volumeRight) {
+	sound->soundInfo = cs_make_def(&sound->sound);
+	sound->soundInfo.looped = loop;
+	sound->soundInfo.volume_left = 0.5;
+	sound->soundInfo.volume_right = 0.5;
+	sound->playingSound = cs_play_sound(gSoundContext, sound->soundInfo);
+}
+
+void juSoundUpdate(JUSound sound, bool loop, float volumeLeft, float volumeRight) {
+	if (cs_is_active(sound->playingSound)) {
+		cs_loop_sound(sound->playingSound, loop);
+		cs_set_volume(sound->playingSound, volumeLeft, volumeRight);
+	}
+}
+
+void juSoundStop(JUSound sound) {
+	if (cs_is_active(sound->playingSound))
+		cs_stop_sound(sound->playingSound);
+}
+
+void juSoundFree(JUSound sound) {
+	juSoundStop(sound);
+	cs_free_sound(&sound->sound);
+	free(sound);
+}
+
+void juSoundStopAll() {
+	cs_stop_all_sounds(gSoundContext);
 }
