@@ -162,6 +162,7 @@ static JUBinaryFont juLoadBinaryFont(const char *file, bool *error) {
 
 		// We now have enough data to calculate the total size the file should be
 		if (size - 1 == 13 + font.size + (font.characters * 4)) {
+			font.size--;
 			font.characterDimensions = juMalloc(font.characters * sizeof(struct JUBinaryCharacter));
 			font.png = juMalloc(font.size);
 
@@ -201,7 +202,9 @@ JUFont juFontLoad(const char *filename) {
 		if (pixels != NULL) {
 			// Bind the image
 			SDL_Surface *png = SDL_CreateRGBSurfaceFrom(pixels, w, h, 32, 4 * w, RMASK, GMASK, BMASK, AMASK);
+
 			free(pixels);
+			SDL_SaveBMP(png, "out.bmp");
 			font->image = vk2dImageFromSurface(vk2dRendererGetDevice(), png);
 			font->bitmap = vk2dTextureLoadFromImage(font->image);
 			SDL_FreeSurface(png);
