@@ -37,6 +37,7 @@ struct JUFont {
 	uint32_t unicodeEnd;     ///< Code point of the last character in the image (exclusive)
 	JUCharacter *characters; ///< Vector of characters
 	VK2DTexture bitmap;      ///< Bitmap of the characters
+	VK2DImage image;         ///< Bitmap image in case it was loaded from a jufnt
 };
 
 /// \brief Loads a font from a .jufnt file (create them with the python script)

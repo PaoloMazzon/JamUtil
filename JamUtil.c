@@ -3,10 +3,23 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "JamUtil.h"
+#include "VK2D/stb_image.h"
 
 /********************** Constants **********************/
 const uint32_t JU_BUCKET_SIZE = 100; // A good size for a small jam game, feel free to adjust
 const uint32_t JU_BINARY_FONT_HEADER_SIZE = 13; // Size of the header of jufnt files
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+uint32_t RMASK = 0xff000000;
+uint32_t GMASK = 0x00ff0000;
+uint32_t BMASK = 0x0000ff00;
+uint32_t AMASK = 0x000000ff;
+#else // little endian, like x86
+uint32_t RMASK = 0x000000ff;
+uint32_t GMASK = 0x0000ff00;
+uint32_t BMASK = 0x00ff0000;
+uint32_t AMASK = 0xff000000;
+#endif
 
 /********************** "Private" Structs **********************/
 
@@ -34,6 +47,7 @@ static void juLog(const char *out, ...) {
 	vprintf(out, list);
 	printf("\n");
 	va_end(list);
+	fflush(stdout);
 }
 
 // Allocates memory, crashing if it doesn't work
@@ -98,7 +112,7 @@ static void juSwapEndian(void *bytes, uint32_t size) {
 
 static void juCopyFromBigEndian(void *dst, void *src, uint32_t size) {
 	memcpy(dst, src, size);
-#if SDL_LIL_ENDIAN
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
 	juSwapEndian(dst, size);
 #endif // SDL_LIL_ENDIAN
 }
@@ -146,7 +160,7 @@ static JUBinaryFont juLoadBinaryFont(const char *file, bool *error) {
 		pointer += 4;
 
 		// We now have enough data to calculate the total size the file should be
-		if (size == 13 + font.size + (font.characters * 4)) {
+		if (size - 1 == 13 + font.size + (font.characters * 4)) {
 			font.characterDimensions = juMalloc(font.characters * sizeof(struct JUBinaryCharacter));
 			font.png = juMalloc(font.size);
 
@@ -158,7 +172,8 @@ static JUBinaryFont juLoadBinaryFont(const char *file, bool *error) {
 				pointer += 2;
 			}
 
-			memcpy(&font.png, buffer + pointer, font.size);
+			memcpy(font.png, buffer + pointer, font.size);
+
 		} else {
 			juLog("jufnt file \"%s\" is unreadable", file);
 		}
@@ -178,8 +193,39 @@ JUFont juFontLoad(const char *filename) {
 	JUBinaryFont binaryFont = juLoadBinaryFont(filename, &error);
 
 	if (!error) {
-		// TODO: This
+		// Create an SDL surface for the png
+		int w, h, channels;
+		FILE *file = fopen("test.png", "wb");
+		fwrite(binaryFont.png, binaryFont.size-1, 1, file);
+		fflush(file);
+		fclose(file);
+		void *pixels = stbi_load_from_memory(binaryFont.png, binaryFont.size, &w, &h, &channels, 4);
 
+		if (pixels != NULL) {
+			// Bind the image
+			SDL_Surface *png = SDL_CreateRGBSurfaceFrom(pixels, w, h, 32, 4 * w, RMASK, GMASK, BMASK, AMASK);
+			free(pixels);
+			font->image = vk2dImageFromSurface(vk2dRendererGetDevice(), png);
+			font->bitmap = vk2dTextureLoadFromImage(font->image);
+			SDL_FreeSurface(png);
+
+			// Basic data
+			font->unicodeStart = 1;
+			font->unicodeEnd = binaryFont.characters + 1;
+			font->characters = juMalloc(sizeof(struct JUCharacter) * binaryFont.characters);
+
+			// Load the characters
+			int x = 0;
+			for (int i = 0; i < binaryFont.characters; i++) {
+				font->characters[i].x = x;
+				font->characters[i].y = 0;
+				font->characters[i].w = binaryFont.characterDimensions[i].width;
+				font->characters[i].h = binaryFont.characterDimensions[i].height;
+				x += binaryFont.characterDimensions[i].width;
+			}
+		} else {
+			juLog("Failed to load font's image");
+		}
 
 		free(binaryFont.png);
 		free(binaryFont.characterDimensions);
@@ -194,8 +240,9 @@ JUFont juFontLoadFromImage(const char *image, uint32_t unicodeStart, uint32_t un
 
 void juFontFree(JUFont font) {
 	if (font != NULL) {
-		free(font->characters);
 		vk2dTextureFree(font->bitmap);
+		vk2dImageFree(font->image);
+		free(font->characters);
 		free(font);
 	}
 }
