@@ -200,14 +200,9 @@ JUFont juFontLoad(const char *filename) {
 		void *pixels = stbi_load_from_memory(binaryFont.png, binaryFont.size, &w, &h, &channels, 4);
 
 		if (pixels != NULL) {
-			// Bind the image
-			SDL_Surface *png = SDL_CreateRGBSurfaceFrom(pixels, w, h, 32, 4 * w, RMASK, GMASK, BMASK, AMASK);
-
+			font->image = vk2dImageFromPixels(vk2dRendererGetDevice(), pixels, w, h);
 			free(pixels);
-			SDL_SaveBMP(png, "out.bmp");
-			font->image = vk2dImageFromSurface(vk2dRendererGetDevice(), png);
 			font->bitmap = vk2dTextureLoadFromImage(font->image);
-			SDL_FreeSurface(png);
 
 			// Basic data
 			font->unicodeStart = 1;
