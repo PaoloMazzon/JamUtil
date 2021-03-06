@@ -6,6 +6,7 @@
 
 /********************** Constants **********************/
 const uint32_t JU_BUCKET_SIZE = 100; // A good size for a small jam game, feel free to adjust
+const uint32_t JU_BINARY_FONT_HEADER_SIZE = 13; // Size of the header of jufnt files
 
 /********************** "Private" Structs **********************/
 
@@ -91,23 +92,83 @@ static const char *juCopyString(const char *string) {
 static void juSwapEndian(void *bytes, uint32_t size) {
 	uint8_t new[size];
 	memcpy(new, bytes, size);
-	for (uint32_t i = size - 1; i >= 0; i--)
+	for (int i = size - 1; i >= 0; i--)
 		((uint8_t*)bytes)[i] = new[size - i - 1];
 }
 
+static void juCopyFromBigEndian(void *dst, void *src, uint32_t size) {
+	memcpy(dst, src, size);
+#if SDL_LIL_ENDIAN
+	juSwapEndian(dst, size);
+#endif // SDL_LIL_ENDIAN
+}
+
+// Dumps a file into a binary buffer (free it yourself)
+static uint8_t *juGetFile(const char *filename, uint32_t *size) {
+	uint8_t *buffer = NULL;
+	FILE *file = fopen(filename, "rb");
+	int len = 0;
+
+	if (file != NULL) {
+		while (!feof(file)) {
+			fgetc(file);
+			len++;
+		}
+		len--;
+		*size = len;
+		buffer = juMalloc(len);
+		rewind(file);
+		fread(buffer, len, 1, file);
+
+		fclose(file);
+	} else {
+		juLog("Couldn't open file \"%s\"", filename);
+	}
+
+	return buffer;
+}
+
 // Loads all jufnt data into a struct
-static JUBinaryFont juLoadBinaryFont(const char *file) {
+static JUBinaryFont juLoadBinaryFont(const char *file, bool *error) {
 	JUBinaryFont font = {};
-	return font; // TODO: This
+	*error = false;
+	uint32_t size;
+	uint8_t *buffer = juGetFile(file, &size);
+	uint32_t pointer = 5; // We don't care about the header
+
+	if (buffer != NULL && size >= JU_BINARY_FONT_HEADER_SIZE) {
+		// png size
+		juCopyFromBigEndian(&font.size, buffer + pointer, 4);
+		pointer += 4;
+
+		// number of characters
+		juCopyFromBigEndian(&font.characters, buffer + pointer, 4);
+		pointer += 4;
+
+		// We now have enough data to calculate the total size the file should be
+		if (size == 13 + font.size + (font.characters * 4)) {
+			// TODO: This
+		} else {
+			juLog("jufnt file \"%s\" is unreadable", file);
+		}
+	} else {
+		*error = true;
+	}
+	free(buffer);
+
+	return font;
 }
 
 /********************** Font **********************/
 
 JUFont juFontLoad(const char *filename) {
 	JUFont font = juMalloc(sizeof(struct JUFont));
-	JUBinaryFont binaryFont = juLoadBinaryFont(filename);
+	bool error;
+	JUBinaryFont binaryFont = juLoadBinaryFont(filename, &error);
 
-	// TODO: This
+	if (!error) {
+		// TODO: This
+	}
 
 	return font;
 }
@@ -117,7 +178,11 @@ JUFont juFontLoadFromImage(const char *image, uint32_t unicodeStart, uint32_t un
 }
 
 void juFontFree(JUFont font) {
-	// TODO: This
+	if (font != NULL) {
+		free(font->characters);
+		vk2dTextureFree(font->bitmap);
+		free(font);
+	}
 }
 
 void juFontDraw(JUFont font, float x, float y, const char *fmt, ...) {

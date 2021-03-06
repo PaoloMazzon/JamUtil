@@ -11,7 +11,7 @@ const char *FILES[] = {
 		"assets/image3.png",
 		"assets/comic.jufnt"
 };
-const uint32_t FILE_COUNT = 3;
+const uint32_t FILE_COUNT = 4;
 
 int main() {
 	SDL_Window *window = SDL_CreateWindow("VK2D", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN);
