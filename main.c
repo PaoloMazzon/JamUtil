@@ -7,16 +7,16 @@ const int WINDOW_HEIGHT = 600;
 
 const char *FILES[] = {
 		"assets/image1.png",
-		"assets/image2.png",
-		"assets/image3.png",
-		"assets/comic.jufnt"
+		"assets/comic.jufnt",
+		"assets/test_sound.wav",
 };
-const uint32_t FILE_COUNT = 4;
+const uint32_t FILE_COUNT = 3;
 
 int main() {
 	SDL_Window *window = SDL_CreateWindow("VK2D", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN);
 	SDL_Event e;
 	VK2DRendererConfig config = {msaa_32x, sm_TripleBuffer, ft_Nearest};
+	juInit(window);
 	vk2dRendererInit(window, config);
 	vec4 clearColour = {0.0, 0.0, 0.0, 1.0}; // Black
 	bool stopRunning = false;
@@ -25,9 +25,11 @@ int main() {
 	JULoader loader = juLoaderCreate(FILES, FILE_COUNT);
 
 	while (!stopRunning) {
-		while (SDL_PollEvent(&e))
-			if (e.type == SDL_QUIT)
+		while (SDL_PollEvent(&e)) {
+			if (e.type == SDL_QUIT) {
 				stopRunning = true;
+			}
+		}
 
 		vk2dRendererStartFrame(clearColour);
 
@@ -43,6 +45,7 @@ int main() {
 	// Free assets
 	juLoaderFree(loader);
 
+	juClose();
 	vk2dRendererQuit();
 	SDL_DestroyWindow(window);
 	return 0;

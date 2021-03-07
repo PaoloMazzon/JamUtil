@@ -420,7 +420,7 @@ static void juLoaderAssetFree(JUAsset asset) {
 	} else if (asset->type == JU_ASSET_TYPE_TEXTURE) {
 		vk2dTextureFree(asset->Asset.tex);
 	} else if (asset->type == JU_ASSET_TYPE_SOUND) {
-		// TODO: Implement sound
+		juSoundFree(asset->Asset.sound);
 	}
 	free((void*)asset->name);
 	free(asset);
@@ -447,7 +447,7 @@ JULoader juLoaderCreate(const char **files, uint32_t fileCount) {
 			asset->Asset.tex = vk2dTextureLoad(files[i]);
 		} else if (strcmp(extension, "wav") == 0 || strcmp(extension, "ogg") == 0 || strcmp(extension, "mp3") == 0) {
 			asset->type = JU_ASSET_TYPE_SOUND;
-			//asset->Asset.sound = NULL; TODO: Audio implementation
+			asset->Asset.sound = juSoundLoad(files[i]);
 		} else {
 			juLog("Unrecognized extension");
 		}
@@ -490,13 +490,13 @@ JUFont juLoaderGetFont(JULoader loader, const char *filename) {
 	return out;
 }
 
-JUFont juLoaderGetSound(JULoader loader, const char *filename) {
+JUSound juLoaderGetSound(JULoader loader, const char *filename) {
 	JUAsset asset = juLoaderGet(loader, filename);
-	void *out = NULL; // TODO: Implement sound
+	JUSound out = NULL;
 
 	if (asset != NULL) {
 		if (asset->type == JU_ASSET_TYPE_SOUND)
-			out = asset->Asset.font; // TODO: Implement sound
+			out = asset->Asset.sound;
 		else
 			juLog("Asset \"%s\" is of incorrect type", filename);
 	} else {
@@ -528,28 +528,28 @@ JUSound juSoundLoad(const char *filename) {
 	return sound;
 }
 
-void juSoundPlay(JUSound sound, bool loop, float volumeLeft, float volumeRight) {
+JUPlayingSound juSoundPlay(JUSound sound, bool loop, float volumeLeft, float volumeRight) {
 	sound->soundInfo = cs_make_def(&sound->sound);
 	sound->soundInfo.looped = loop;
 	sound->soundInfo.volume_left = 0.5;
 	sound->soundInfo.volume_right = 0.5;
-	sound->playingSound = cs_play_sound(gSoundContext, sound->soundInfo);
+	JUPlayingSound new = {cs_play_sound(gSoundContext, sound->soundInfo)};
+	return new;
 }
 
-void juSoundUpdate(JUSound sound, bool loop, float volumeLeft, float volumeRight) {
-	if (cs_is_active(sound->playingSound)) {
-		cs_loop_sound(sound->playingSound, loop);
-		cs_set_volume(sound->playingSound, volumeLeft, volumeRight);
+void juSoundUpdate(JUPlayingSound sound, bool loop, float volumeLeft, float volumeRight) {
+	if (sound.playingSound != NULL && cs_is_active(sound.playingSound)) {
+		cs_loop_sound(sound.playingSound, loop);
+		cs_set_volume(sound.playingSound, volumeLeft, volumeRight);
 	}
 }
 
-void juSoundStop(JUSound sound) {
-	if (cs_is_active(sound->playingSound))
-		cs_stop_sound(sound->playingSound);
+void juSoundStop(JUPlayingSound sound) {
+	if (sound.playingSound != NULL && cs_is_active(sound.playingSound))
+		cs_stop_sound(sound.playingSound);
 }
 
 void juSoundFree(JUSound sound) {
-	juSoundStop(sound);
 	cs_free_sound(&sound->sound);
 	free(sound);
 }

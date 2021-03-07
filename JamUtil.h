@@ -12,6 +12,7 @@ typedef struct JUFont *JUFont;
 typedef struct JUAsset *JUAsset;
 typedef struct JULoader *JULoader;
 typedef struct JUSound *JUSound;
+typedef struct JUPlayingSound JUPlayingSound;
 
 /********************** Enums **********************/
 typedef enum {
@@ -100,7 +101,7 @@ struct JUAsset {
 	union {
 		VK2DTexture tex; ///< Texture bound to this asset
 		JUFont font;     ///< Font bound to this asset
-		// TODO: Sound
+		JUSound sound;   ///< Sound bound to this asset
 	} Asset; ///< Only need to store one at a time
 };
 
@@ -128,7 +129,7 @@ JUFont juLoaderGetFont(JULoader loader, const char *filename);
 
 /// \brief Gets a sound from the loader
 /// \return Returns the requested asset or NULL if it doesn't exist
-JUFont juLoaderGetSound(JULoader loader, const char *filename);
+JUSound juLoaderGetSound(JULoader loader, const char *filename);
 
 /// \brief Frees a JULoader and all the assets it loaded
 void juLoaderFree(JULoader loader);
@@ -139,6 +140,10 @@ void juLoaderFree(JULoader loader);
 struct JUSound {
 	cs_loaded_sound_t sound;
 	cs_play_sound_def_t soundInfo;
+};
+
+/// \brief A currently playing sound
+struct JUPlayingSound {
 	cs_playing_sound_t *playingSound;
 };
 
@@ -146,13 +151,15 @@ struct JUSound {
 JUSound juSoundLoad(const char *filename);
 
 /// \brief Plays a sound
-void juSoundPlay(JUSound sound, bool loop, float volumeLeft, float volumeRight);
+/// \return Returns a playing sound handle you can use to update/stop the sound, but it doesn't need
+/// to be stored (it won't cause a memory leak)
+JUPlayingSound juSoundPlay(JUSound sound, bool loop, float volumeLeft, float volumeRight);
 
 /// \brief Change the properties of a currently playing sound
-void juSoundUpdate(JUSound sound, bool loop, float volumeLeft, float volumeRight);
+void juSoundUpdate(JUPlayingSound sound, bool loop, float volumeLeft, float volumeRight);
 
 /// \brief Stops a sound if its currently playing
-void juSoundStop(JUSound sound);
+void juSoundStop(JUPlayingSound sound);
 
 /// \brief Frees a sound from memory
 void juSoundFree(JUSound sound);
