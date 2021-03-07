@@ -65,7 +65,7 @@ save functionality uses the following format to save data
  + From here on out its just data, so for each piece of data
    + 4 bytes for the size of the key string
    + X bytes for the key string
-   + 1 byte representing the type of data it is
+   + 4 byte representing the type of data it is
      + If it is a fixed width piece of data (floats, ints), X bytes for that data
      + If it is a variable length thing (strings, void bytestreams)
        + 4 bytes for the size of the data

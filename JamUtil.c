@@ -13,6 +13,8 @@
 const uint32_t JU_BUCKET_SIZE = 100; // A good size for a small jam game, feel free to adjust
 const uint32_t JU_BINARY_FONT_HEADER_SIZE = 13; // Size of the header of jufnt files
 const uint32_t JU_STRING_BUFFER = 1024; // Maximum amount of text that can be rendered at once, a kilobyte is good for most things
+const uint32_t JU_SAVE_MAX_SIZE = 2000; // Maximum pieces of data that can be loaded from a save, anything more than this is probably a corrupt file
+const uint32_t JU_SAVE_MAX_KEY_SIZE = 20; // Maximum size a save key can be
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 uint32_t RMASK = 0xff000000;
@@ -658,22 +660,75 @@ bool juPointInCircle(JUCircle *circle, float x, float y) {
 
 JUSave juSaveLoad(const char *filename) {
 	JUSave save = juMalloc(sizeof(JUSave));
-	JUBuffer buffer = juBufferLoad(filename);
+	FILE *buffer = fopen(filename, "rb");
 	uint32_t pointer = 5;
+	char header[6] = {};
 
-	if (buffer != NULL && buffer->size >= 9) {
-		// TODO: This
+	if (buffer != NULL) {
+		// Grab total size
+		fread(header, 1, 5, buffer);
+		fread(&save->size, 4, 1, buffer);
+
+		// If we don't check for max size its possible for a corrupt file to cause a crash
+		if (save->size < JU_SAVE_MAX_SIZE && strcmp("JUSAV", header) == 0) {
+			save->data = juMallocZero(sizeof(struct JUData) * save->size);
+
+			// Grab all data
+			for (int i = 0; i < save->size && !feof(buffer); i++) {
+				JUData *data = &save->data[i];
+				// TODO: This
+			}
+		} else {
+			juLog("Save file \"%s\" is likely corrupt (save count of %i)", filename, save->size);
+			free(save);
+			save = NULL;
+		}
+
+		fclose(buffer);
 	} else {
-		save->data = NULL;
-		save->size = 0;
+		juLog("File \"%s\" could not be opened", filename);
 	}
 
-	juBufferFree(buffer);
 	return save;
 }
 
 void juSaveStore(JUSave save, const char *filename) {
-	// TODO: This
+	FILE *out = fopen(filename, "wb");
+
+	if (out != NULL) {
+		// Header data
+		fwrite("JUSAV", 5, 1, out);
+		fwrite(&save->size, 4, 1, out);
+
+		for (int i = 0; i < save->size; i++) {
+			// Write the key for this data
+			int size = strlen(save->data[i].key);
+			fwrite(&size, 4, 1, out);
+			fwrite(save->data[i].key, size, 1, out);
+
+			// Write stuff depending on type of data this is
+			if (save->data[i].type == JU_DATA_TYPE_DOUBLE) {
+				fwrite(&save->data[i].Data.f64, 8, 1, out);
+			} else if (save->data[i].type == JU_DATA_TYPE_FLOAT) {
+				fwrite(&save->data[i].Data.f32, 4, 1, out);
+			} else if (save->data[i].type == JU_DATA_TYPE_INT64) {
+				fwrite(&save->data[i].Data.i64, 8, 1, out);
+			} else if (save->data[i].type == JU_DATA_TYPE_UINT64) {
+				fwrite(&save->data[i].Data.u64, 8, 1, out);
+			} else if (save->data[i].type == JU_DATA_TYPE_STRING) {
+				size = strlen(save->data[i].Data.string);
+				fwrite(&size, 4, 1, out);
+				fwrite(save->data[i].Data.string, size, 1, out);
+			} else if (save->data[i].type == JU_DATA_TYPE_VOID) {
+				fwrite(&save->data[i].Data.data.size, 4, 1, out);
+				fwrite(save->data[i].Data.data.data, save->data[i].Data.data.size, 1, out);
+			}
+		}
+
+		fclose(out);
+	} else {
+		juLog("Failed to open file \"%s\"", filename);
+	}
 }
 
 void juSaveFree(JUSave save) {
