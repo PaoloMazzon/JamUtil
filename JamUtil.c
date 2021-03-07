@@ -445,7 +445,7 @@ JULoader juLoaderCreate(const char **files, uint32_t fileCount) {
 		} else if (strcmp(extension, "png") == 0 || strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0 || strcmp(extension, "bmp") == 0) {
 			asset->type = JU_ASSET_TYPE_TEXTURE;
 			asset->Asset.tex = vk2dTextureLoad(files[i]);
-		} else if (strcmp(extension, "wav") == 0 || strcmp(extension, "ogg") == 0 || strcmp(extension, "mp3") == 0) {
+		} else if (strcmp(extension, "wav") == 0) {
 			asset->type = JU_ASSET_TYPE_SOUND;
 			asset->Asset.sound = juSoundLoad(files[i]);
 		} else {

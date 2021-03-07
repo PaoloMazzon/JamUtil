@@ -9,11 +9,11 @@ Features
 
  + Asset loader to easily load and free many resources at once
  + Simple bitmap fonts, monospaced and automatically generated
+ + Sound support (Windows, Mac, and possibly Linux only)
 
 Planned Features
 ================
 
- + Audio library
  + Basic game math/physics
  + Some collisions
  + Simple file I/O
@@ -21,7 +21,9 @@ Planned Features
 Usage
 =====
 This is meant to be used the same way Vulkan2D is, in that you just add it as a submodule
-and include the few files in your CMake manually.
+and include the few files in your CMake manually. On Windows you may need to link `dsound`
+as well depending on your build environment. Aside from that, just make sure to call `juInit`
+and `juClose`.
 
 .jufnt Font Files
 =================

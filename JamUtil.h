@@ -116,7 +116,7 @@ struct JULoader {
 /// \return Returns a new JULoader or NULL
 ///
 /// What type of asset is trying to be loaded will be discerned by its extension.
-/// Supported extensions are jpg, png, bmp, ogg, wav, mp3, and jufnt
+/// Supported extensions are jpg, png, bmp, wav and jufnt
 JULoader juLoaderCreate(const char **files, uint32_t fileCount);
 
 /// \brief Gets a texture from the loader
@@ -147,7 +147,7 @@ struct JUPlayingSound {
 	cs_playing_sound_t *playingSound;
 };
 
-/// \brief Loads a sound from a file into memory
+/// \brief Loads a sound from a file into memory - right now only WAV files are supported
 JUSound juSoundLoad(const char *filename);
 
 /// \brief Plays a sound
