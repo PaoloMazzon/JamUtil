@@ -624,29 +624,25 @@ void *juSaveGetData(JUSave save, const char *key, uint32_t *size) {
 /********************** Collisions **********************/
 
 float juPointAngle(float x1, float y1, float x2, float y2) {
-	return 0; // TODO: This
+	return atanf((x2 - x1) / (y2 - y1));
 }
 
 float juPointDistance(float x1, float y1, float x2, float y2) {
-	return 0; // TODO: This
+	return sqrtf(powf(y2 - y1, 2) + powf(x2 - x1, 2));
 }
 
 bool juRectangleCollision(JURectangle *r1, JURectangle *r2) {
-	return false; // TODO: This
+	return (r1->y + r1->h > r2->y && r1->y < r2->y + r2->h && r1->x + r1->w > r2->x && r1->x < r2->x + r2->w);
 }
 
 bool juCircleCollision(JUCircle *c1, JUCircle *c2) {
-	return false; // TODO: This
-}
-
-bool juCircleRectangleCollision(JUCircle *circle, JURectangle *rectangle) {
-	return false; // TODO: This
+	return juPointDistance(c1->x, c1->y, c2->x, c2->y) < c1->r + c2->r;
 }
 
 bool juPointInRectangle(JURectangle *rect, float x, float y) {
-	return false; // TODO: This
+	return (x >= rect->x && x <= rect->x + rect->w && y >= rect->y && x <= rect->y + rect->h);
 }
 
 bool juPointInCircle(JUCircle *circle, float x, float y) {
-	return false; // TODO: This
+	return juPointDistance(circle->x, circle->y, x, y) <= circle->r;
 }

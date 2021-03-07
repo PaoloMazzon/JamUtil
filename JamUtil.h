@@ -298,9 +298,6 @@ bool juRectangleCollision(JURectangle *r1, JURectangle *r2);
 /// \brief Checks for a collision between two circles
 bool juCircleCollision(JUCircle *c1, JUCircle *c2);
 
-/// \brief Checks for a collision between a cirlce and rectangle
-bool juCircleRectangleCollision(JUCircle *circle, JURectangle *rectangle);
-
 /// \brief Checks if a point exists within a given rectangle
 bool juPointInRectangle(JURectangle *rect, float x, float y);
 

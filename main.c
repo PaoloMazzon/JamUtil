@@ -12,6 +12,9 @@ const char *FILES[] = {
 };
 const uint32_t FILE_COUNT = 3;
 
+vec4 DEFAULT_COLOUR = {1, 1, 1, 1};
+vec4 COLLISION_COLOUR = {1, 0, 0, 1};
+
 int main() {
 	SDL_Window *window = SDL_CreateWindow("VK2D", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN);
 	SDL_Event e;
