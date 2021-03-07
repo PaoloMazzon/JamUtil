@@ -11,11 +11,11 @@ Features
  + Simple bitmap fonts, monospaced and automatically generated
  + Sound support (Windows, Mac, and possibly Linux only)
  + Save/load buffers to/from files easily
+ + Basic collisions
 
 Planned Features
 ================
 
- + Some collisions
  + Simple file I/O
  
 Usage

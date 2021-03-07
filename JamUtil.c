@@ -376,7 +376,13 @@ void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, 
 
 JUBuffer juBufferLoad(const char *filename) {
 	JUBuffer buffer = juMalloc(sizeof(struct JUBuffer));
-	juGetFile(filename, &buffer->size);
+	buffer->data = juGetFile(filename, &buffer->size);
+
+	if (buffer->data == NULL) {
+		free(buffer);
+		buffer = NULL;
+	}
+
 	return buffer;
 }
 
@@ -651,7 +657,19 @@ bool juPointInCircle(JUCircle *circle, float x, float y) {
 /********************** File I/O **********************/
 
 JUSave juSaveLoad(const char *filename) {
-	// TODO: This
+	JUSave save = juMalloc(sizeof(JUSave));
+	JUBuffer buffer = juBufferLoad(filename);
+	uint32_t pointer = 5;
+
+	if (buffer != NULL && buffer->size >= 9) {
+		// TODO: This
+	} else {
+		save->data = NULL;
+		save->size = 0;
+	}
+
+	juBufferFree(buffer);
+	return save;
 }
 
 void juSaveStore(JUSave save, const char *filename) {
@@ -659,7 +677,17 @@ void juSaveStore(JUSave save, const char *filename) {
 }
 
 void juSaveFree(JUSave save) {
-	// TODO: This
+	if (save != NULL) {
+		for (int i = 0; i < save->size; i++) {
+			free((void*)save->data[i].key);
+			if (save->data[i].type == JU_DATA_TYPE_STRING)
+				free((void*)save->data[i].Data.string);
+			else if (save->data[i].type == JU_DATA_TYPE_VOID)
+				free(save->data[i].Data.data.data);
+		}
+		free(save->data);
+		free(save);
+	}
 }
 
 void juSaveSetInt64(JUSave save, const char *key, int64_t data) {
