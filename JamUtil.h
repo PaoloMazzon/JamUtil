@@ -13,15 +13,33 @@ typedef struct JUAsset *JUAsset;
 typedef struct JULoader *JULoader;
 typedef struct JUSound *JUSound;
 typedef struct JUPlayingSound JUPlayingSound;
+typedef struct JURectangle JURectangle;
+typedef struct JUCircle JUCircle;
+typedef struct JUData JUData;
+typedef struct JUSave *JUSave;
 
 /********************** Enums **********************/
+
+/// \brief Types of assets stored in the loader
 typedef enum {
-	JU_ASSET_TYPE_NONE = 0, // Specifically for checking if there is an asset at all
+	JU_ASSET_TYPE_NONE = 0,
 	JU_ASSET_TYPE_FONT = 1,
 	JU_ASSET_TYPE_TEXTURE = 2,
 	JU_ASSET_TYPE_SOUND = 3,
 	JU_ASSET_TYPE_MAX = 4,
 } JUAssetType;
+
+/// \brief Types of data the save can handle
+typedef enum {
+	JU_DATA_TYPE_NONE = 0,
+	JU_DATA_TYPE_FLOAT = 1,
+	JU_DATA_TYPE_DOUBLE = 2,
+	JU_DATA_TYPE_INT64 = 3,
+	JU_DATA_TYPE_UINT64 = 4,
+	JU_DATA_TYPE_STRING = 5,
+	JU_DATA_TYPE_VOID = 6,
+	JU_DATA_TYPE_MAX = 7,
+} JUDataType;
 
 /********************** Top-Level **********************/
 
@@ -167,5 +185,115 @@ void juSoundFree(JUSound sound);
 /// \brief Stops all currently playing sounds
 void juSoundStopAll();
 
-/********************** Math/Physics **********************/
-// TODO: This
+/********************** File I/O **********************/
+
+/// \brief A piece of data stored in a save
+struct JUData {
+	JUDataType type; ///< Type of this data
+	const char *key; ///< Key of this data
+
+	union {
+		int64_t i64;        ///< 64 bit signed int
+		uint64_t u64;       ///< 64 bit unsigned int
+		float f32;          ///< 32 bit float
+		double f64;         ///< 64 bit float
+		const char *string; ///< String
+		struct {
+			void *data;    ///< Raw data
+			uint32_t size; ///< Size in bytes of the data
+		} data;
+	} Data;
+};
+
+/// \brief Save data for easily saving and loading many different types of data
+struct JUSave {
+	uint32_t size; ///< Number of "datas" stored in this save
+	JUData *data;  ///< Vector of data
+};
+
+/// \brief Loads a save from a save file or returns an empty save if the file wasn't found
+///
+/// These aren't particularly fast, and they are not meant to be used every frame non-stop,
+/// especially in larger games.
+JUSave juSaveLoad(const char *filename);
+
+/// \brief Saves a save to a file
+void juSaveStore(JUSave save, const char *filename);
+
+/// \brief Frees a save from memory
+void juSaveFree(JUSave save);
+
+/// \brief Sets some data in a save
+void juSaveSetInt64(JUSave save, const char *key, int64_t data);
+
+/// \brief Gets some data from a save
+int64_t juSaveGetInt64(JUSave save, const char *key);
+
+/// \brief Sets some data in a save
+void juSaveSetUInt64(JUSave save, const char *key, uint64_t data);
+
+/// \brief Gets some data from a save
+uint64_t juSaveGetUInt64(JUSave save, const char *key);
+
+/// \brief Sets some data in a save
+void juSaveSetFloat(JUSave save, const char *key, float data);
+
+/// \brief Gets some data from a save
+float juSaveGetFloat(JUSave save, const char *key);
+
+/// \brief Sets some data in a save
+void juSaveSetDouble(JUSave save, const char *key, double data);
+
+/// \brief Gets some data from a save
+double juSaveGetDouble(JUSave save, const char *key);
+
+/// \brief Sets some data in a save
+void juSaveSetString(JUSave save, const char *key, const char *data);
+
+/// \brief Gets some data from a save
+const char *juSaveGetString(JUSave save, const char *key);
+
+/// \brief Sets some data in a save
+void juSaveSetData(JUSave save, const char *key, void *data);
+
+/// \brief Gets some data from a save
+void *juSaveGetData(JUSave save, const char *key);
+
+
+/********************** Collisions **********************/
+
+/// \brief A simple rectangle
+struct JURectangle {
+	float x; ///< x position of the top left of the rectangle
+	float y; ///< y position of the top left of the rectangle
+	float w; ///< Width of the rectangle
+	float h; ///< Height of the rectangle
+};
+
+/// \brief A simple circle
+struct JUCircle {
+	float x; ///< x position of the center of the circle
+	float y; ///< y position of the center of the circle
+	float r; ///< Radius in pixels
+};
+
+/// \brief Gets the angle between two points
+float juPointAngle(float x1, float y1, float x2, float y2);
+
+/// \brief Gets the distance between two points
+float juPointDistance(float x1, float y1, float x2, float y2);
+
+/// \brief Checks for a collision between two rectangles
+bool juRectangleCollision(JURectangle *r1, JURectangle *r2);
+
+/// \brief Checks for a collision between two circles
+bool juCircleCollision(JUCircle *c1, JUCircle *c2);
+
+/// \brief Checks for a collision between a cirlce and rectangle
+bool juCircleRectangleCollision(JUCircle *circle, JURectangle *rectangle);
+
+/// \brief Checks if a point exists within a given rectangle
+bool juPointInRectangle(JURectangle *rect, float x, float y);
+
+/// \brief Checks if a point exists within a given circle
+bool juPointInCircle(JUCircle *circle, float x, float y);

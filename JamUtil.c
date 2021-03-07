@@ -557,3 +557,96 @@ void juSoundFree(JUSound sound) {
 void juSoundStopAll() {
 	cs_stop_all_sounds(gSoundContext);
 }
+
+/********************** File I/O **********************/
+
+JUSave juSaveLoad(const char *filename) {
+	// TODO: This
+}
+
+void juSaveStore(JUSave save, const char *filename) {
+	// TODO: This
+}
+
+void juSaveFree(JUSave save) {
+	// TODO: This
+}
+
+void juSaveSetInt64(JUSave save, const char *key, int64_t data) {
+	// TODO: This
+}
+
+int64_t juSaveGetInt64(JUSave save, const char *key) {
+	// TODO: This
+}
+
+void juSaveSetUInt64(JUSave save, const char *key, uint64_t data) {
+	// TODO: This
+}
+
+uint64_t juSaveGetUInt64(JUSave save, const char *key) {
+	// TODO: This
+}
+
+void juSaveSetFloat(JUSave save, const char *key, float data) {
+	// TODO: This
+}
+
+float juSaveGetFloat(JUSave save, const char *key) {
+	// TODO: This
+}
+
+void juSaveSetDouble(JUSave save, const char *key, double data) {
+	// TODO: This
+}
+
+double juSaveGetDouble(JUSave save, const char *key) {
+	// TODO: This
+}
+
+void juSaveSetString(JUSave save, const char *key, const char *data) {
+	// TODO: This
+}
+
+const char *juSaveGetString(JUSave save, const char *key) {
+	// TODO: This
+}
+
+void juSaveSetData(JUSave save, const char *key, void *data) {
+	// TODO: This
+}
+
+void *juSaveGetData(JUSave save, const char *key) {
+	// TODO: This
+}
+
+
+/********************** Collisions **********************/
+
+float juPointAngle(float x1, float y1, float x2, float y2) {
+	return 0; // TODO: This
+}
+
+float juPointDistance(float x1, float y1, float x2, float y2) {
+	return 0; // TODO: This
+}
+
+bool juRectangleCollision(JURectangle *r1, JURectangle *r2) {
+	return false; // TODO: This
+}
+
+bool juCircleCollision(JUCircle *c1, JUCircle *c2) {
+	return false; // TODO: This
+}
+
+bool juCircleRectangleCollision(JUCircle *circle, JURectangle *rectangle) {
+	return false; // TODO: This
+}
+
+bool juPointInRectangle(JURectangle *rect, float x, float y) {
+	return false; // TODO: This
+}
+
+bool juPointInCircle(JUCircle *circle, float x, float y) {
+	return false; // TODO: This
+}
