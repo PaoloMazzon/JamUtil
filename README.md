@@ -14,7 +14,6 @@ Features
 Planned Features
 ================
 
- + Basic game math/physics
  + Some collisions
  + Simple file I/O
  
@@ -55,8 +54,18 @@ In order with no padding, this is the binary file format `.jufnt`.
  + 4 bytes * number of characters denoting each character's size in pixels (2 bytes for width, 2 bytes for height)
  + X bytes for the png stored at the end of the file
 
-Or more visually,
+.jusav File Format
+==================
+This is not at all important for the average user to know, but for my own sake and those curious, the
+save functionality uses the following format to save data
 
-    JUFNTSIZESIZE101010101010101010101010PNGPNGPNGPNGPNGPNGPNGPNGPNGPNG
-   
-Kind of a poor representation but it's something.
+ + 5 bytes at the top that read `JUSAV`
+ + 4 bytes stating the number of "datas" stored in the file
+ + From here on out its just data, so for each piece of data
+   + 4 bytes for the size of the key string
+   + X bytes for the key string
+   + 1 byte representing the type of data it is
+     + If it is a fixed width piece of data (floats, ints), X bytes for that data
+     + If it is a variable length thing (strings, void bytestreams)
+       + 4 bytes for the size of the data
+       + X bytes for the data itself

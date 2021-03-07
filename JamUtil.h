@@ -213,6 +213,11 @@ struct JUSave {
 
 /// \brief Loads a save from a save file or returns an empty save if the file wasn't found
 ///
+/// These are basically just tables of data, you use a key to set some data then use a key
+/// to later find that data again. The real functionality comes in the form of saving and
+/// loading from files with it, since you can save all your data in a human-readable form
+/// and load it right into your game easily.
+///
 /// These aren't particularly fast, and they are not meant to be used every frame non-stop,
 /// especially in larger games.
 JUSave juSaveLoad(const char *filename);
@@ -251,13 +256,17 @@ double juSaveGetDouble(JUSave save, const char *key);
 void juSaveSetString(JUSave save, const char *key, const char *data);
 
 /// \brief Gets some data from a save
+/// \warning The pointer/data belongs to the save itself and will be freed with it - copy it if you need it longer
 const char *juSaveGetString(JUSave save, const char *key);
 
 /// \brief Sets some data in a save
-void juSaveSetData(JUSave save, const char *key, void *data);
+///
+/// The save will make a local copy of the data
+void juSaveSetData(JUSave save, const char *key, void *data, uint32_t size);
 
 /// \brief Gets some data from a save
-void *juSaveGetData(JUSave save, const char *key);
+/// \warning The pointer/data belongs to the save itself and will be freed with it - copy it if you need it longer
+void *juSaveGetData(JUSave save, const char *key, uint32_t *size);
 
 
 /********************** Collisions **********************/

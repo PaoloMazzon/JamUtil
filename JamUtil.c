@@ -612,11 +612,11 @@ const char *juSaveGetString(JUSave save, const char *key) {
 	// TODO: This
 }
 
-void juSaveSetData(JUSave save, const char *key, void *data) {
+void juSaveSetData(JUSave save, const char *key, void *data, uint32_t size) {
 	// TODO: This
 }
 
-void *juSaveGetData(JUSave save, const char *key) {
+void *juSaveGetData(JUSave save, const char *key, uint32_t *size) {
 	// TODO: This
 }
 
