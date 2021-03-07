@@ -372,6 +372,51 @@ void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, 
 	}
 }
 
+/********************** Buffer **********************/
+
+JUBuffer juBufferLoad(const char *filename) {
+	JUBuffer buffer = juMalloc(sizeof(struct JUBuffer));
+	juGetFile(filename, &buffer->size);
+	return buffer;
+}
+
+JUBuffer juBufferCreate(void *data, uint32_t size) {
+	JUBuffer buffer = juMalloc(sizeof(struct JUBuffer));
+	buffer->data = juMalloc(size);
+	buffer->size = size;
+	memcpy(buffer->data, data, size);
+	return buffer;
+}
+
+void juBufferSave(JUBuffer buffer, const char *filename) {
+	FILE *out = fopen(filename, "wb");
+
+	if (out != NULL) {
+		fwrite(buffer->data, buffer->size, 1, out);
+		fclose(out);
+	} else {
+		juLog("Failed to open file \"%s\"", filename);
+	}
+}
+
+void juBufferFree(JUBuffer buffer) {
+	if (buffer != NULL) {
+		free(buffer->data);
+		free(buffer);
+	}
+}
+
+void juBufferSaveRaw(void *data, uint32_t size, const char *filename) {
+	FILE *out = fopen(filename, "wb");
+
+	if (out != NULL) {
+		fwrite(data, size, 1, out);
+		fclose(out);
+	} else {
+		juLog("Failed to open file \"%s\"", filename);
+	}
+}
+
 /********************** Asset Loader **********************/
 
 // Puts an asset into the loader (properly)
@@ -421,6 +466,8 @@ static void juLoaderAssetFree(JUAsset asset) {
 		vk2dTextureFree(asset->Asset.tex);
 	} else if (asset->type == JU_ASSET_TYPE_SOUND) {
 		juSoundFree(asset->Asset.sound);
+	} else if (asset->type == JU_ASSET_TYPE_BUFFER) {
+		juBufferFree(asset->Asset.buffer);
 	}
 	free((void*)asset->name);
 	free(asset);
@@ -449,7 +496,8 @@ JULoader juLoaderCreate(const char **files, uint32_t fileCount) {
 			asset->type = JU_ASSET_TYPE_SOUND;
 			asset->Asset.sound = juSoundLoad(files[i]);
 		} else {
-			juLog("Unrecognized extension");
+			asset->type = JU_ASSET_TYPE_BUFFER;
+			asset->Asset.buffer = juBufferLoad(files[i]);
 		}
 
 		juLoaderAdd(loader, asset);
@@ -497,6 +545,22 @@ JUSound juLoaderGetSound(JULoader loader, const char *filename) {
 	if (asset != NULL) {
 		if (asset->type == JU_ASSET_TYPE_SOUND)
 			out = asset->Asset.sound;
+		else
+			juLog("Asset \"%s\" is of incorrect type", filename);
+	} else {
+		juLog("Asset \"%s\" doesn't exist", filename);
+	}
+
+	return out;
+}
+
+JUBuffer juLoaderGetBuffer(JULoader loader, const char *filename) {
+	JUAsset asset = juLoaderGet(loader, filename);
+	JUBuffer out = NULL;
+
+	if (asset != NULL) {
+		if (asset->type == JU_ASSET_TYPE_BUFFER)
+			out = asset->Asset.buffer;
 		else
 			juLog("Asset \"%s\" is of incorrect type", filename);
 	} else {
@@ -556,6 +620,32 @@ void juSoundFree(JUSound sound) {
 
 void juSoundStopAll() {
 	cs_stop_all_sounds(gSoundContext);
+}
+
+/********************** Collisions **********************/
+
+float juPointAngle(float x1, float y1, float x2, float y2) {
+	return atanf((x2 - x1) / (y2 - y1));
+}
+
+float juPointDistance(float x1, float y1, float x2, float y2) {
+	return sqrtf(powf(y2 - y1, 2) + powf(x2 - x1, 2));
+}
+
+bool juRectangleCollision(JURectangle *r1, JURectangle *r2) {
+	return (r1->y + r1->h > r2->y && r1->y < r2->y + r2->h && r1->x + r1->w > r2->x && r1->x < r2->x + r2->w);
+}
+
+bool juCircleCollision(JUCircle *c1, JUCircle *c2) {
+	return juPointDistance(c1->x, c1->y, c2->x, c2->y) < c1->r + c2->r;
+}
+
+bool juPointInRectangle(JURectangle *rect, float x, float y) {
+	return (x >= rect->x && x <= rect->x + rect->w && y >= rect->y && x <= rect->y + rect->h);
+}
+
+bool juPointInCircle(JUCircle *circle, float x, float y) {
+	return juPointDistance(circle->x, circle->y, x, y) <= circle->r;
 }
 
 /********************** File I/O **********************/
@@ -618,31 +708,4 @@ void juSaveSetData(JUSave save, const char *key, void *data, uint32_t size) {
 
 void *juSaveGetData(JUSave save, const char *key, uint32_t *size) {
 	// TODO: This
-}
-
-
-/********************** Collisions **********************/
-
-float juPointAngle(float x1, float y1, float x2, float y2) {
-	return atanf((x2 - x1) / (y2 - y1));
-}
-
-float juPointDistance(float x1, float y1, float x2, float y2) {
-	return sqrtf(powf(y2 - y1, 2) + powf(x2 - x1, 2));
-}
-
-bool juRectangleCollision(JURectangle *r1, JURectangle *r2) {
-	return (r1->y + r1->h > r2->y && r1->y < r2->y + r2->h && r1->x + r1->w > r2->x && r1->x < r2->x + r2->w);
-}
-
-bool juCircleCollision(JUCircle *c1, JUCircle *c2) {
-	return juPointDistance(c1->x, c1->y, c2->x, c2->y) < c1->r + c2->r;
-}
-
-bool juPointInRectangle(JURectangle *rect, float x, float y) {
-	return (x >= rect->x && x <= rect->x + rect->w && y >= rect->y && x <= rect->y + rect->h);
-}
-
-bool juPointInCircle(JUCircle *circle, float x, float y) {
-	return juPointDistance(circle->x, circle->y, x, y) <= circle->r;
 }

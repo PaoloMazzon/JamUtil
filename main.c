@@ -9,6 +9,7 @@ const char *FILES[] = {
 		"assets/image1.png",
 		"assets/comic.jufnt",
 		"assets/test_sound.wav",
+		"GenFont.py",
 };
 const uint32_t FILE_COUNT = 3;
 

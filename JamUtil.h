@@ -17,6 +17,7 @@ typedef struct JURectangle JURectangle;
 typedef struct JUCircle JUCircle;
 typedef struct JUData JUData;
 typedef struct JUSave *JUSave;
+typedef struct JUBuffer *JUBuffer;
 
 /********************** Enums **********************/
 
@@ -26,7 +27,8 @@ typedef enum {
 	JU_ASSET_TYPE_FONT = 1,
 	JU_ASSET_TYPE_TEXTURE = 2,
 	JU_ASSET_TYPE_SOUND = 3,
-	JU_ASSET_TYPE_MAX = 4,
+	JU_ASSET_TYPE_BUFFER = 4,
+	JU_ASSET_TYPE_MAX = 5,
 } JUAssetType;
 
 /// \brief Types of data the save can handle
@@ -108,6 +110,29 @@ void juFontDraw(JUFont font, float x, float y, const char *fmt, ...);
 /// in this. Newlines (\n) are also allowed.
 void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, ...);
 
+/********************** Buffer **********************/
+
+/// \brief Simple buffer to make loading binary easier
+struct JUBuffer {
+	void *data;    ///< Data stored in this buffer
+	uint32_t size; ///< Size of the data stored in the buffer
+};
+
+/// \brief Loads a buffer from a file
+JUBuffer juBufferLoad(const char *filename);
+
+/// \brief Creates a buffer from given data, the data will be copied to the buffer
+JUBuffer juBufferCreate(void *data, uint32_t size);
+
+/// \brief Saves a buffer to a file
+void juBufferSave(JUBuffer buffer, const char *filename);
+
+/// \brief Frees a buffer from memory
+void juBufferFree(JUBuffer buffer);
+
+/// \brief Saves some data to a file without the need for a buffer
+void juBufferSaveRaw(void *data, uint32_t size, const char *filename);
+
 /********************** Asset Manager **********************/
 
 /// \brief Can hold any asset
@@ -120,6 +145,8 @@ struct JUAsset {
 		VK2DTexture tex; ///< Texture bound to this asset
 		JUFont font;     ///< Font bound to this asset
 		JUSound sound;   ///< Sound bound to this asset
+		JUBuffer buffer; ///< Buffer bound to this asset
+
 	} Asset; ///< Only need to store one at a time
 };
 
@@ -134,7 +161,10 @@ struct JULoader {
 /// \return Returns a new JULoader or NULL
 ///
 /// What type of asset is trying to be loaded will be discerned by its extension.
-/// Supported extensions are jpg, png, bmp, wav and jufnt
+/// Supported extensions are jpg, png, bmp, wav and jufnt. Any other file extension loaded
+/// through this function will be loaded as a buffer (so feel free to load whatever
+/// files you want, but anything not loaded as a specific type will be loaded as
+/// a JUBuffer).
 JULoader juLoaderCreate(const char **files, uint32_t fileCount);
 
 /// \brief Gets a texture from the loader
@@ -148,6 +178,10 @@ JUFont juLoaderGetFont(JULoader loader, const char *filename);
 /// \brief Gets a sound from the loader
 /// \return Returns the requested asset or NULL if it doesn't exist
 JUSound juLoaderGetSound(JULoader loader, const char *filename);
+
+/// \brief Gets a buffer from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+JUBuffer juLoaderGetBuffer(JULoader loader, const char *filename);
 
 /// \brief Frees a JULoader and all the assets it loaded
 void juLoaderFree(JULoader loader);

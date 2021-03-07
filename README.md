@@ -10,6 +10,7 @@ Features
  + Asset loader to easily load and free many resources at once
  + Simple bitmap fonts, monospaced and automatically generated
  + Sound support (Windows, Mac, and possibly Linux only)
+ + Save/load buffers to/from files easily
 
 Planned Features
 ================
