@@ -669,9 +669,8 @@ bool juPointInCircle(JUCircle *circle, float x, float y) {
 /********************** File I/O **********************/
 
 JUSave juSaveLoad(const char *filename) {
-	JUSave save = juMalloc(sizeof(JUSave));
+	JUSave save = juMallocZero(sizeof(JUSave));
 	FILE *buffer = fopen(filename, "rb");
-	uint32_t pointer = 5;
 	char header[6] = {};
 
 	if (buffer != NULL) {
@@ -747,6 +746,7 @@ void juSaveStore(JUSave save, const char *filename) {
 			int size = strlen(save->data[i].key);
 			fwrite(&size, 4, 1, out);
 			fwrite(save->data[i].key, size, 1, out);
+			fwrite(&save->data[i].type, 4, 1, out);
 
 			// Write stuff depending on type of data this is
 			if (save->data[i].type == JU_DATA_TYPE_DOUBLE) {
