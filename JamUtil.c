@@ -101,6 +101,16 @@ static void *juMallocZero(uint32_t size) {
 	return out;
 }
 
+// Reallocates memory, crashing if it doesn't work
+static void *juRealloc(void *ptr, uint32_t newSize) {
+	void *newptr = realloc(ptr, newSize);
+	if (newptr == NULL) {
+		juLog("Failed to allocate memory");
+		abort();
+	}
+	return newptr;
+}
+
 // Hashes a string into a 32 bit number between 0 and JU_BUCKET_SIZE
 static uint32_t juHash(const char *string) {
 	uint32_t hash = 5381;
@@ -777,50 +787,147 @@ void juSaveFree(JUSave save) {
 	}
 }
 
+static JUData *juSaveGetRawData(JUSave save, const char *key) {
+	JUData *out = NULL;
+
+	for (int i = 0; i < save->size && out == NULL; i++)
+		if (strcmp(key, save->data[i].key) == 0)
+			out = &save->data[i];
+
+	return out;
+}
+
+static void juSaveSetRawData(JUSave save, const char *key, JUData *data) {
+	JUData *exists = juSaveGetRawData(save, key);
+
+	if (exists == NULL) {
+		save->data = juRealloc(save->data, sizeof(struct JUData) * (save->size + 1));
+		memcpy(&save->data[save->size], data, sizeof(struct JUData));
+		save->size++;
+	} else {
+		memcpy(exists, data, sizeof(struct JUData));
+	}
+}
+
 void juSaveSetInt64(JUSave save, const char *key, int64_t data) {
-	// TODO: This
+	JUData out;
+	out.key = juCopyString(key);
+	out.type = JU_DATA_TYPE_INT64;
+	out.Data.i64 = data;
+	juSaveSetRawData(save, key, &out);
 }
 
 int64_t juSaveGetInt64(JUSave save, const char *key) {
-	// TODO: This
+	JUData *data = juSaveGetRawData(save, key);
+
+	if (data != NULL && data->type == JU_DATA_TYPE_INT64) {
+		return data->Data.i64;
+	} else if (data != NULL && data->type != JU_DATA_TYPE_INT64) {
+		juLog("Requested key \"%s\" does not match expected type INT64", key);
+	}
+
+	return 0;
 }
 
 void juSaveSetUInt64(JUSave save, const char *key, uint64_t data) {
-	// TODO: This
+	JUData out;
+	out.key = juCopyString(key);
+	out.type = JU_DATA_TYPE_UINT64;
+	out.Data.u64 = data;
+	juSaveSetRawData(save, key, &out);
 }
 
 uint64_t juSaveGetUInt64(JUSave save, const char *key) {
-	// TODO: This
+	JUData *data = juSaveGetRawData(save, key);
+
+	if (data != NULL && data->type == JU_DATA_TYPE_UINT64) {
+		return data->Data.u64;
+	} else if (data != NULL && data->type != JU_DATA_TYPE_UINT64) {
+		juLog("Requested key \"%s\" does not match expected type UINT64", key);
+	}
+
+	return 0;
 }
 
 void juSaveSetFloat(JUSave save, const char *key, float data) {
-	// TODO: This
+	JUData out;
+	out.key = juCopyString(key);
+	out.type = JU_DATA_TYPE_FLOAT;
+	out.Data.f32 = data;
+	juSaveSetRawData(save, key, &out);
 }
 
 float juSaveGetFloat(JUSave save, const char *key) {
-	// TODO: This
+	JUData *data = juSaveGetRawData(save, key);
+
+	if (data != NULL && data->type == JU_DATA_TYPE_FLOAT) {
+		return data->Data.f32;
+	} else if (data != NULL && data->type != JU_DATA_TYPE_FLOAT) {
+		juLog("Requested key \"%s\" does not match expected type FLOAT", key);
+	}
+
+	return 0;
 }
 
 void juSaveSetDouble(JUSave save, const char *key, double data) {
-	// TODO: This
+	JUData out;
+	out.key = juCopyString(key);
+	out.type = JU_DATA_TYPE_DOUBLE;
+	out.Data.f64 = data;
+	juSaveSetRawData(save, key, &out);
 }
 
 double juSaveGetDouble(JUSave save, const char *key) {
-	// TODO: This
+	JUData *data = juSaveGetRawData(save, key);
+
+	if (data != NULL && data->type == JU_DATA_TYPE_DOUBLE) {
+		return data->Data.f64;
+	} else if (data != NULL && data->type != JU_DATA_TYPE_DOUBLE) {
+		juLog("Requested key \"%s\" does not match expected type DOUBLE", key);
+	}
+
+	return 0;
 }
 
 void juSaveSetString(JUSave save, const char *key, const char *data) {
-	// TODO: This
+	JUData out;
+	out.key = juCopyString(key);
+	out.type = JU_DATA_TYPE_STRING;
+	out.Data.string = juCopyString(data);
+	juSaveSetRawData(save, key, &out);
 }
 
 const char *juSaveGetString(JUSave save, const char *key) {
-	// TODO: This
+	JUData *data = juSaveGetRawData(save, key);
+
+	if (data != NULL && data->type == JU_DATA_TYPE_STRING) {
+		return data->Data.string;
+	} else if (data != NULL && data->type != JU_DATA_TYPE_STRING) {
+		juLog("Requested key \"%s\" does not match expected type STRING", key);
+	}
+
+	return 0;
 }
 
 void juSaveSetData(JUSave save, const char *key, void *data, uint32_t size) {
-	// TODO: This
+	JUData out;
+	out.key = juCopyString(key);
+	out.type = JU_DATA_TYPE_VOID;
+	out.Data.data.size = size;
+	out.Data.data.data = juMalloc(size);
+	memcpy(out.Data.data.data, data, out.Data.data.size);
+	juSaveSetRawData(save, key, &out);
 }
 
 void *juSaveGetData(JUSave save, const char *key, uint32_t *size) {
-	// TODO: This
+	JUData *data = juSaveGetRawData(save, key);
+
+	if (data != NULL && data->type == JU_DATA_TYPE_VOID) {
+		*size = data->Data.data.size;
+		return data->Data.data.data;
+	} else if (data != NULL && data->type != JU_DATA_TYPE_VOID) {
+		juLog("Requested key \"%s\" does not match expected type VOID", key);
+	}
+
+	return 0;
 }
