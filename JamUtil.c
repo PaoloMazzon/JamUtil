@@ -676,7 +676,39 @@ JUSave juSaveLoad(const char *filename) {
 			// Grab all data
 			for (int i = 0; i < save->size && !feof(buffer); i++) {
 				JUData *data = &save->data[i];
-				// TODO: This
+				int keySize;
+
+				// Get key size and make sure its a legit key
+				fread(&keySize, 4, 1, buffer);
+				if (keySize <= JU_SAVE_MAX_KEY_SIZE) {
+					data->key = juMalloc(keySize + 1);
+					((char*)data->key)[keySize] = 0;
+					fread((void*)data->key, keySize, 1, buffer);
+					fread(&data->type, 4, 1, buffer);
+
+					// Get data depending on what it is
+					if (data->type == JU_DATA_TYPE_DOUBLE) {
+						fread(&data->Data.f64, 8, 1, buffer);
+					} else if (data->type == JU_DATA_TYPE_FLOAT) {
+						fread(&data->Data.f32, 4, 1, buffer);
+					} else if (data->type == JU_DATA_TYPE_INT64) {
+						fread(&data->Data.i64, 8, 1, buffer);
+					} else if (data->type == JU_DATA_TYPE_UINT64) {
+						fread(&data->Data.u64, 8, 1, buffer);
+					} else if (data->type == JU_DATA_TYPE_STRING) {
+						int stringLength;
+						fread(&stringLength, 4, 1, buffer);
+						data->Data.string = juMalloc(stringLength + 1);
+						((char*)data->Data.string)[stringLength] = 0;
+						fread((void*)data->Data.string, stringLength, 1, buffer);
+					} else if (data->type == JU_DATA_TYPE_VOID) {
+						fread(&data->Data.data.size, 4, 1, buffer);
+						data->Data.string = juMalloc(data->Data.data.size);
+						fread((void*)data->Data.data.data, data->Data.data.size, 1, buffer);
+					}
+				} else {
+					juLog("Save file \"%s\" is likely corrupt (key size of %i)", filename, keySize);
+				}
 			}
 		} else {
 			juLog("Save file \"%s\" is likely corrupt (save count of %i)", filename, save->size);
