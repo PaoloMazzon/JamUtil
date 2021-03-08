@@ -337,3 +337,18 @@ bool juPointInRectangle(JURectangle *rect, float x, float y);
 
 /// \brief Checks if a point exists within a given circle
 bool juPointInCircle(JUCircle *circle, float x, float y);
+
+/********************** Keyboard **********************/
+
+/// \brief Call this at the start of every frame to make sure controls are properly handled
+/// \warning Call this BEFORE the sdl event loop or the pressed/released bits won't work
+void juKeyboardUpdate();
+
+/// \brief Checks if a key is currently pressed
+bool juKeyboardGetKey(SDL_Scancode key);
+
+/// \brief Checks if a key was just pressed
+bool juKeyboardGetKeyPressed(SDL_Scancode key);
+
+/// \brief Checks if a key is currently pressed
+bool juKeyboardGetKeyReleased(SDL_Scancode key);

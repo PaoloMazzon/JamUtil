@@ -30,6 +30,8 @@ uint32_t AMASK = 0xff000000;
 
 /********************** Globals **********************/
 cs_context_t *gSoundContext = NULL;
+int gKeyboardSize = 0;
+uint8_t *gKeyboardState, *gKeyboardPreviousState;
 
 /********************** "Private" Structs **********************/
 
@@ -50,7 +52,9 @@ typedef struct JUBinaryFont {
 /********************** Top-Level **********************/
 
 static void juLog(const char *out, ...);
+static void *juMallocZero(uint32_t size);
 void juInit(SDL_Window *window) {
+	// Sound
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version)
 	SDL_GetWindowWMInfo(window, &wmInfo);
@@ -61,9 +65,17 @@ void juInit(SDL_Window *window) {
 	} else {
 		juLog("Failed to initialize sound.");
 	}
+
+	// Keyboard controls
+	gKeyboardState = (void*)SDL_GetKeyboardState(&gKeyboardSize);
+	gKeyboardPreviousState = juMallocZero(gKeyboardSize);
 }
 
 void juClose() {
+	free(gKeyboardPreviousState);
+	gKeyboardPreviousState = NULL;
+	gKeyboardState = NULL;
+	gKeyboardSize = 0;
 	cs_shutdown_context(gSoundContext);
 	gSoundContext = NULL;
 }
@@ -930,4 +942,23 @@ void *juSaveGetData(JUSave save, const char *key, uint32_t *size) {
 	}
 
 	return 0;
+}
+
+/********************** Keyboard **********************/
+
+void juKeyboardUpdate() {
+	memcpy(gKeyboardPreviousState, gKeyboardState, gKeyboardSize);
+	SDL_PumpEvents();
+}
+
+bool juKeyboardGetKey(SDL_Scancode key) {
+	return gKeyboardState[key];
+}
+
+bool juKeyboardGetKeyPressed(SDL_Scancode key) {
+	return gKeyboardState[key] && !gKeyboardPreviousState[key];
+}
+
+bool juKeyboardGetKeyReleased(SDL_Scancode key) {
+	return !gKeyboardState[key] && gKeyboardPreviousState[key];
 }

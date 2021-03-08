@@ -12,6 +12,7 @@ Features
  + Sound support (Windows, Mac, and possibly Linux only)
  + Easily save and load many different types of data
  + Save/load buffers to/from files easily
+ + Simplified keyboard controls
  + Basic collisions
  
 Usage
