@@ -29,9 +29,11 @@ uint32_t AMASK = 0xff000000;
 #endif
 
 /********************** Globals **********************/
-cs_context_t *gSoundContext = NULL;
-int gKeyboardSize = 0;
-uint8_t *gKeyboardState, *gKeyboardPreviousState;
+static cs_context_t *gSoundContext = NULL;
+static int gKeyboardSize = 0;
+static uint8_t *gKeyboardState, *gKeyboardPreviousState;
+static double gDelta = 0;
+static uint64_t gLastTime = 0;
 
 /********************** "Private" Structs **********************/
 
@@ -69,15 +71,33 @@ void juInit(SDL_Window *window) {
 	// Keyboard controls
 	gKeyboardState = (void*)SDL_GetKeyboardState(&gKeyboardSize);
 	gKeyboardPreviousState = juMallocZero(gKeyboardSize);
+
+	// Delta
+	gLastTime = SDL_GetPerformanceCounter();
+	gDelta = 1;
 }
 
-void juClose() {
+void juUpdate() {
+	// Update delta
+	gDelta = (double)(SDL_GetPerformanceCounter() - gLastTime) / (double)SDL_GetPerformanceFrequency();
+	gLastTime = SDL_GetPerformanceCounter();
+
+	// Update keyboard
+	memcpy(gKeyboardPreviousState, gKeyboardState, gKeyboardSize);
+	SDL_PumpEvents();
+}
+
+void juQuit() {
 	free(gKeyboardPreviousState);
 	gKeyboardPreviousState = NULL;
 	gKeyboardState = NULL;
 	gKeyboardSize = 0;
 	cs_shutdown_context(gSoundContext);
 	gSoundContext = NULL;
+}
+
+double juDelta() {
+	return gDelta;
 }
 
 /********************** Static Functions **********************/
@@ -503,31 +523,31 @@ static void juLoaderAssetFree(JUAsset asset) {
 	free(asset);
 }
 
-JULoader juLoaderCreate(const char **files, uint32_t fileCount) {
+JULoader juLoaderCreate(JULoadedAsset *files, uint32_t fileCount) {
 	JULoader loader = juMalloc(sizeof(struct JULoader));
 	JUAsset *assets = juMallocZero(JU_BUCKET_SIZE * sizeof(struct JUAsset));
 	loader->assets = assets;
 
 	// Load all assets
 	for (int i = 0; i < fileCount; i++) {
-		const char *extension = files[i] + juLastDot(files[i]) + 1;
+		const char *extension = files[i].path + juLastDot(files[i].path) + 1;
 		JUAsset asset = juMalloc(sizeof(struct JUAsset));
-		asset->name = juCopyString(files[i]);
+		asset->name = juCopyString(files[i].path);
 		asset->next = NULL;
 
 		// Load file based on asset
 		if (strcmp(extension, "jufnt") == 0) {
 			asset->type = JU_ASSET_TYPE_FONT;
-			asset->Asset.font = juFontLoad(files[i]);
+			asset->Asset.font = juFontLoad(files[i].path);
 		} else if (strcmp(extension, "png") == 0 || strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0 || strcmp(extension, "bmp") == 0) {
 			asset->type = JU_ASSET_TYPE_TEXTURE;
-			asset->Asset.tex = vk2dTextureLoad(files[i]);
+			asset->Asset.tex = vk2dTextureLoad(files[i].path);
 		} else if (strcmp(extension, "wav") == 0) {
 			asset->type = JU_ASSET_TYPE_SOUND;
-			asset->Asset.sound = juSoundLoad(files[i]);
+			asset->Asset.sound = juSoundLoad(files[i].path);
 		} else {
 			asset->type = JU_ASSET_TYPE_BUFFER;
-			asset->Asset.buffer = juBufferLoad(files[i]);
+			asset->Asset.buffer = juBufferLoad(files[i].path);
 		}
 
 		juLoaderAdd(loader, asset);
@@ -946,11 +966,6 @@ void *juSaveGetData(JUSave save, const char *key, uint32_t *size) {
 
 /********************** Keyboard **********************/
 
-void juKeyboardUpdate() {
-	memcpy(gKeyboardPreviousState, gKeyboardState, gKeyboardSize);
-	SDL_PumpEvents();
-}
-
 bool juKeyboardGetKey(SDL_Scancode key) {
 	return gKeyboardState[key];
 }
@@ -961,4 +976,17 @@ bool juKeyboardGetKeyPressed(SDL_Scancode key) {
 
 bool juKeyboardGetKeyReleased(SDL_Scancode key) {
 	return !gKeyboardState[key] && gKeyboardPreviousState[key];
+}
+
+/********************** Animations **********************/
+JUSprite juAnimationCreate(const char *filename, float x, float y, float w, float h, float delay) {
+	// TODO: This
+}
+
+void juAnimationDraw(JUSprite spr, float x, float y) {
+	// TODO: This
+}
+
+void juAnimationFree(JUSprite anim) {
+	// TODO: This
 }

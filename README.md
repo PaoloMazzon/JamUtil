@@ -29,7 +29,7 @@ idea is you make a list of assets you want to load and pass it to the loader and
 attempt to load them all based on the file extension. If the extension is not recognized,
 it will be loaded as a `JUBuffer` (see buffers below).
 
-    const char *FILES[] = {...};
+    JULoadedAsset FILES[] = {{...}};
     const int FILE_COUNT = 10;
     JULoader loader = juLoaderCreate(FILES, FILE_COUNT);
     ...
@@ -47,6 +47,19 @@ Supported loader file extensions are
  + `.jufnt` will create a font (see fonts below)
  + `.wav` will create a sound (see sounds below)
  + all else will be loaded as a buffer
+
+The data you pass to the loader to load files is usually just the path, but it must be wrapped
+in a `JULoadedAsset` struct, which allows for the loading of sprite sheets and possibly other
+things that would require parameters to be created with.
+
+    JULoadedAsset FILES[] = {
+        {"myspritesheet.png", 10, 10, 20, 20, 0.2},
+        {"myaudioclip.wav"},
+        {"myfont.jufnt"},
+        {"somebinaryfile.bin"},
+    };
+
+Of course check `JamUtil.h` for the documentation on `JULoadedAsset`. 
 
 Fonts
 -----

@@ -18,6 +18,8 @@ typedef struct JUCircle JUCircle;
 typedef struct JUData JUData;
 typedef struct JUSave *JUSave;
 typedef struct JUBuffer *JUBuffer;
+typedef struct JUSprite *JUSprite;
+typedef struct JULoadedAsset JULoadedAsset;
 
 /********************** Enums **********************/
 
@@ -49,8 +51,14 @@ typedef enum {
 /// \param window Window that is used
 void juInit(SDL_Window *window);
 
+/// \brief Keeps various systems up to date, call every frame at the start before the SDL event loop
+void juUpdate();
+
 /// \brief Frees all resources, call at the end of the program
-void juClose();
+void juQuit();
+
+/// \brief Returns the time in seconds that the last frame took
+double juDelta();
 
 /********************** Font **********************/
 
@@ -135,6 +143,21 @@ void juBufferSaveRaw(void *data, uint32_t size, const char *filename);
 
 /********************** Asset Manager **********************/
 
+/// \brief Data used to tell the loader what to load
+///
+/// Specifying a width/height/delay for an image tells the loader that the image
+/// should be treated as a sprite.
+struct JULoadedAsset {
+	const char *path; ///< Path to the asset to load
+	float x;          ///< If its a sprite, this is the x in the sheet where the cells start
+	float y;          ///< If its a sprite, this is the y in the sheet where the cells start
+	float w;          ///< If its a sprite, this is the width of each cell in the animation
+	float h;          ///< If its a sprite, this is the height of each cell in the animation
+	float delay;      ///< If its a sprite, this is the delay in seconds between animation frames
+	float originX;    ///< If its a sprite, this is the x origin of the sprite
+	float originY;    ///< If its a sprite, this is the y origin of the sprite
+};
+
 /// \brief Can hold any asset
 struct JUAsset {
 	JUAssetType type; ///< Type of asset this is
@@ -165,7 +188,7 @@ struct JULoader {
 /// through this function will be loaded as a buffer (so feel free to load whatever
 /// files you want, but anything not loaded as a specific type will be loaded as
 /// a JUBuffer).
-JULoader juLoaderCreate(const char **files, uint32_t fileCount);
+JULoader juLoaderCreate(JULoadedAsset *files, uint32_t fileCount);
 
 /// \brief Gets a texture from the loader
 /// \return Returns the requested asset or NULL if it doesn't exist
@@ -340,10 +363,6 @@ bool juPointInCircle(JUCircle *circle, float x, float y);
 
 /********************** Keyboard **********************/
 
-/// \brief Call this at the start of every frame to make sure controls are properly handled
-/// \warning Call this BEFORE the sdl event loop or the pressed/released bits won't work
-void juKeyboardUpdate();
-
 /// \brief Checks if a key is currently pressed
 bool juKeyboardGetKey(SDL_Scancode key);
 
@@ -352,3 +371,33 @@ bool juKeyboardGetKeyPressed(SDL_Scancode key);
 
 /// \brief Checks if a key is currently pressed
 bool juKeyboardGetKeyReleased(SDL_Scancode key);
+
+/********************** Animations **********************/
+
+/// \brief Information for storign animations
+struct JUSprite {
+	struct {
+		uint64_t lastTime; ///< Last time the animation was updated
+		uint32_t frames;   ///< Number of frames in the animation
+		VK2DTexture tex;   ///< Sprite sheet
+	} Internal;     ///< Data for the sprite to keep track of itself
+	double delay;   ///< Time in seconds a single frame lasts
+	float x;        ///< X position in the texture where the sprite sheet starts
+	float y;        ///< Y position in the texture where the sprite sheet starts
+	float w;        ///< Width of each cell
+	float h;        ///< Height of each cell
+	float originX;  ///< X origin of the sprite (used for drawing position and rotation)
+	float originY;  ///< Y origin of the sprite (used for drawing position and rotation)
+	float scaleX;   ///< X scale of the sprite
+	float scaleY;   ///< Y scale of the sprite
+	float rotation; ///< Rotation of the sprite
+};
+
+/// \brief Loads an animation from a sprite sheet file
+JUSprite juAnimationCreate(const char *filename, float x, float y, float w, float h, float delay);
+
+/// \brief Draws an animation
+void juAnimationDraw(JUSprite spr, float x, float y);
+
+/// \brief Frees an animation from memory
+void juAnimationFree(JUSprite anim);

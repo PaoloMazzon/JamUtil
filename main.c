@@ -5,11 +5,11 @@
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
-const char *FILES[] = {
-		"assets/image1.png",
-		"assets/comic.jufnt",
-		"assets/test_sound.wav",
-		"GenFont.py",
+JULoadedAsset FILES[] = {
+	{"assets/image1.png"},
+	{"assets/comic.jufnt"},
+	{"assets/test_sound.wav"},
+	{"GenFont.py"},
 };
 const uint32_t FILE_COUNT = 3;
 
@@ -29,6 +29,7 @@ int main() {
 	JULoader loader = juLoaderCreate(FILES, FILE_COUNT);
 
 	while (!stopRunning) {
+		juUpdate();
 		while (SDL_PollEvent(&e)) {
 			if (e.type == SDL_QUIT) {
 				stopRunning = true;
@@ -49,7 +50,7 @@ int main() {
 	// Free assets
 	juLoaderFree(loader);
 
-	juClose();
+	juQuit();
 	vk2dRendererQuit();
 	SDL_DestroyWindow(window);
 	return 0;
