@@ -125,26 +125,6 @@ and use, so here they are
  
 Again, for specifics, just check the header. Everything is documented.
 
-.jufnt Font Files
-=================
-Loading and drawing TTF fonts not only takes a lot more work and performance, it basically
-requires the usage of another library. For the sake of keeping this as a single source-header
-ordeal, only bitmap fonts are supported. To this end, jufnt files exist to make bitmap
-fonts super easy to deal with. In order to use a jufnt file,
-
- 1. Get a preferred ttf font
- 2. Run `python GenFont.py <font-name> <font-size>`
- 3. Load the generated `.jufnt` file with `juFontLoad("myfont.jufnt");` (or with the asset loader)
- 
-That's it. The Python script will take the ttf font and turn it into a bitmap font, also storing
-the size of each character as to allow for non-mono-spaced bitmap fonts. Furthermore, no other
-files are required to load the font other than the jufnt file as it stores the image and all
-character sizes. See below for the binary file format if you wish.
-
-Also you can just manually load images as bitmap fonts too, this is meant to easily create bitmap
-fonts as it can often take a bit of time to manually create a bitmap font, especially when its
-not mono-spaced.
-
 .jufnt File Format
 ==================
 In order with no padding, this is the binary file format `.jufnt`.
