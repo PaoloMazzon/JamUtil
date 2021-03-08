@@ -125,6 +125,33 @@ and use, so here they are
  
 Again, for specifics, just check the header. Everything is documented.
 
+Example CMake
+=============
+It can be a bit complicated to understand and add both libraries (Vulkan2D and JamUtil) so
+here is a "working" (I made one that worked then put it here to explain) CMakeLists.txt
+so you can mostly just copy/paste this to start.
+
+    project(YOUR_GAME)
+    ...
+    # At the top we find the two required packages: Vulkan and SDL2. You may need to link SDL2 manually on Windows or use FindSDL2.cmake
+    find_package(Vulkan)
+    find_package(SDL2 REQUIRED)
+    
+    # For the sake of readability all of the needed files are put into variables, this should be a straight copy/paste
+    set(VMA_FILES Vulkan2D/VulkanMemoryAllocator/src/vk_mem_alloc.h Vulkan2D/VulkanMemoryAllocator/src/VmaUsage.cpp)
+    file(GLOB VK2D_FILES Vulkan2D/VK2D/*.c)
+    set(JAMUTIL_FILES JamUtil/JamUtil.c)
+    
+    # Obviously include/link whatever else you need here, but this is the minimum required stuff
+    include_directories(Vulkan2D/ JamUtil/ ${SDL2_INCLUDE_DIR} ${Vulkan_INCLUDE_DIRS})
+    add_executable(${PROJECT_NAME} main.c ${JAMUTIL_FILES} ${VK2D_FILES} ${VMA_FILES})
+    
+    # You also may or may not need to link "dsound" depending on your compiler/environment
+    target_link_libraries(${PROJECT_NAME} m ${SDL2_LIBRARIES} ${Vulkan_LIBRARIES})
+
+And from there you can use VK2D and JamUtil to your heart's content. See `main.c` if you want a
+quick setup example (be sure to change the assets directory or remove them).
+
 .jufnt File Format
 ==================
 In order with no padding, this is the binary file format `.jufnt`.
