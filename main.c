@@ -10,6 +10,7 @@ JULoadedAsset FILES[] = {
 	{"assets/comic.jufnt"},
 	{"assets/test_sound.wav"},
 	{"GenFont.py"},
+	{"assets/sheet.png", 0, 0, 50, 50, 0.5, 9},
 };
 const uint32_t FILE_COUNT = 3;
 

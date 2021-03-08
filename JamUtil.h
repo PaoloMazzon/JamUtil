@@ -30,7 +30,8 @@ typedef enum {
 	JU_ASSET_TYPE_TEXTURE = 2,
 	JU_ASSET_TYPE_SOUND = 3,
 	JU_ASSET_TYPE_BUFFER = 4,
-	JU_ASSET_TYPE_MAX = 5,
+	JU_ASSET_TYPE_SPRITE = 5,
+	JU_ASSET_TYPE_MAX = 6,
 } JUAssetType;
 
 /// \brief Types of data the save can handle
@@ -140,74 +141,6 @@ void juBufferFree(JUBuffer buffer);
 
 /// \brief Saves some data to a file without the need for a buffer
 void juBufferSaveRaw(void *data, uint32_t size, const char *filename);
-
-/********************** Asset Manager **********************/
-
-/// \brief Data used to tell the loader what to load
-///
-/// Specifying a width/height/delay for an image tells the loader that the image
-/// should be treated as a sprite.
-struct JULoadedAsset {
-	const char *path; ///< Path to the asset to load
-	float x;          ///< If its a sprite, this is the x in the sheet where the cells start
-	float y;          ///< If its a sprite, this is the y in the sheet where the cells start
-	float w;          ///< If its a sprite, this is the width of each cell in the animation
-	float h;          ///< If its a sprite, this is the height of each cell in the animation
-	float delay;      ///< If its a sprite, this is the delay in seconds between animation frames
-	float originX;    ///< If its a sprite, this is the x origin of the sprite
-	float originY;    ///< If its a sprite, this is the y origin of the sprite
-};
-
-/// \brief Can hold any asset
-struct JUAsset {
-	JUAssetType type; ///< Type of asset this is
-	const char *name; ///< Name of this asset for bucket collision checking
-	JUAsset next;     ///< Next asset in this slot should there be a hash collision
-
-	union {
-		VK2DTexture tex; ///< Texture bound to this asset
-		JUFont font;     ///< Font bound to this asset
-		JUSound sound;   ///< Sound bound to this asset
-		JUBuffer buffer; ///< Buffer bound to this asset
-
-	} Asset; ///< Only need to store one at a time
-};
-
-/// \brief Stores, loads, and frees many assets at once
-struct JULoader {
-	JUAsset *assets; ///< Bucket of assets
-};
-
-/// \brief Creates an asset loader, loading all the specified files
-/// \param files List of files to load, their filenames will be their key
-/// \param fileCount Number of files that will be loaded
-/// \return Returns a new JULoader or NULL
-///
-/// What type of asset is trying to be loaded will be discerned by its extension.
-/// Supported extensions are jpg, png, bmp, wav and jufnt. Any other file extension loaded
-/// through this function will be loaded as a buffer (so feel free to load whatever
-/// files you want, but anything not loaded as a specific type will be loaded as
-/// a JUBuffer).
-JULoader juLoaderCreate(JULoadedAsset *files, uint32_t fileCount);
-
-/// \brief Gets a texture from the loader
-/// \return Returns the requested asset or NULL if it doesn't exist
-VK2DTexture juLoaderGetTexture(JULoader loader, const char *filename);
-
-/// \brief Gets a texture from the loader
-/// \return Returns the requested asset or NULL if it doesn't exist
-JUFont juLoaderGetFont(JULoader loader, const char *filename);
-
-/// \brief Gets a sound from the loader
-/// \return Returns the requested asset or NULL if it doesn't exist
-JUSound juLoaderGetSound(JULoader loader, const char *filename);
-
-/// \brief Gets a buffer from the loader
-/// \return Returns the requested asset or NULL if it doesn't exist
-JUBuffer juLoaderGetBuffer(JULoader loader, const char *filename);
-
-/// \brief Frees a JULoader and all the assets it loaded
-void juLoaderFree(JULoader loader);
 
 /********************** Audio **********************/
 
@@ -394,10 +327,91 @@ struct JUSprite {
 };
 
 /// \brief Loads an animation from a sprite sheet file
-JUSprite juAnimationCreate(const char *filename, float x, float y, float w, float h, float delay);
+/// \param filename Image file of the spritesheet
+/// \param x X in the sprite sheet where the cells begin
+/// \param y Y in the sprite sheet where the cells begin
+/// \param w Width of each cell
+/// \param h Height of each cell
+/// \param delay Delay in seconds between animation frames
+/// \param frames Animation frame count (a value of zero will be interpreted as 1)
+/// \return Returns a new sprite or NULL if it failed
+JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h, float delay, int frames);
 
 /// \brief Draws an animation
-void juAnimationDraw(JUSprite spr, float x, float y);
+void juSpriteDraw(JUSprite spr, float x, float y);
 
 /// \brief Frees an animation from memory
-void juAnimationFree(JUSprite anim);
+void juSpriteFree(JUSprite anim);
+
+/********************** Asset Manager **********************/
+
+/// \brief Data used to tell the loader what to load
+///
+/// Specifying a width/height/delay for an image tells the loader that the image
+/// should be treated as a sprite.
+struct JULoadedAsset {
+	const char *path; ///< Path to the asset to load
+	float x;          ///< If its a sprite, this is the x in the sheet where the cells start
+	float y;          ///< If its a sprite, this is the y in the sheet where the cells start
+	float w;          ///< If its a sprite, this is the width of each cell in the animation
+	float h;          ///< If its a sprite, this is the height of each cell in the animation
+	float delay;      ///< If its a sprite, this is the delay in seconds between animation frames
+	int frames;       ///< Number of frames in the animation, 0 is assumed to be 1
+	float originX;    ///< If its a sprite, this is the x origin of the sprite
+	float originY;    ///< If its a sprite, this is the y origin of the sprite
+};
+
+/// \brief Can hold any asset
+struct JUAsset {
+	JUAssetType type; ///< Type of asset this is
+	const char *name; ///< Name of this asset for bucket collision checking
+	JUAsset next;     ///< Next asset in this slot should there be a hash collision
+
+	union {
+		VK2DTexture tex; ///< Texture bound to this asset
+		JUFont font;     ///< Font bound to this asset
+		JUSound sound;   ///< Sound bound to this asset
+		JUBuffer buffer; ///< Buffer bound to this asset
+		JUSprite sprite; ///< Sprite bound to this asset
+	} Asset; ///< Only need to store one at a time
+};
+
+/// \brief Stores, loads, and frees many assets at once
+struct JULoader {
+	JUAsset *assets; ///< Bucket of assets
+};
+
+/// \brief Creates an asset loader, loading all the specified files
+/// \param files List of files to load, their filenames will be their key
+/// \param fileCount Number of files that will be loaded
+/// \return Returns a new JULoader or NULL
+///
+/// What type of asset is trying to be loaded will be discerned by its extension.
+/// Supported extensions are jpg, png, bmp, wav and jufnt. Any other file extension loaded
+/// through this function will be loaded as a buffer (so feel free to load whatever
+/// files you want, but anything not loaded as a specific type will be loaded as
+/// a JUBuffer).
+JULoader juLoaderCreate(JULoadedAsset *files, uint32_t fileCount);
+
+/// \brief Gets a texture from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+VK2DTexture juLoaderGetTexture(JULoader loader, const char *filename);
+
+/// \brief Gets a texture from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+JUFont juLoaderGetFont(JULoader loader, const char *filename);
+
+/// \brief Gets a sound from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+JUSound juLoaderGetSound(JULoader loader, const char *filename);
+
+/// \brief Gets a buffer from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+JUBuffer juLoaderGetBuffer(JULoader loader, const char *filename);
+
+/// \brief Gets a sprite from the loader
+/// \return Returns the requested asset or NULL if it doesn't exist
+JUSprite juLoaderGetSprite(JULoader loader, const char *filename);
+
+/// \brief Frees a JULoader and all the assets it loaded
+void juLoaderFree(JULoader loader);

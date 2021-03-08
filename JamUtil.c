@@ -518,6 +518,8 @@ static void juLoaderAssetFree(JUAsset asset) {
 		juSoundFree(asset->Asset.sound);
 	} else if (asset->type == JU_ASSET_TYPE_BUFFER) {
 		juBufferFree(asset->Asset.buffer);
+	} else if (asset->type == JU_ASSET_TYPE_SPRITE) {
+		juSpriteFree(asset->Asset.sprite);
 	}
 	free((void*)asset->name);
 	free(asset);
@@ -540,8 +542,19 @@ JULoader juLoaderCreate(JULoadedAsset *files, uint32_t fileCount) {
 			asset->type = JU_ASSET_TYPE_FONT;
 			asset->Asset.font = juFontLoad(files[i].path);
 		} else if (strcmp(extension, "png") == 0 || strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0 || strcmp(extension, "bmp") == 0) {
-			asset->type = JU_ASSET_TYPE_TEXTURE;
-			asset->Asset.tex = vk2dTextureLoad(files[i].path);
+			if (files[i].h + files[i].w + files[i].delay != 0) {
+				// Sprite
+				asset->type = JU_ASSET_TYPE_SPRITE;
+				asset->Asset.sprite = juSpriteCreate(files[i].path, files[i].x, files[i].y, files[i].w, files[i].h, files[i].delay, files[i].frames);
+				if (asset->Asset.sprite != NULL) {
+					asset->Asset.sprite->originX = files[i].originX;
+					asset->Asset.sprite->originY = files[i].originY;
+				}
+			} else {
+				// Just a textures
+				asset->type = JU_ASSET_TYPE_TEXTURE;
+				asset->Asset.tex = vk2dTextureLoad(files[i].path);
+			}
 		} else if (strcmp(extension, "wav") == 0) {
 			asset->type = JU_ASSET_TYPE_SOUND;
 			asset->Asset.sound = juSoundLoad(files[i].path);
@@ -611,6 +624,22 @@ JUBuffer juLoaderGetBuffer(JULoader loader, const char *filename) {
 	if (asset != NULL) {
 		if (asset->type == JU_ASSET_TYPE_BUFFER)
 			out = asset->Asset.buffer;
+		else
+			juLog("Asset \"%s\" is of incorrect type", filename);
+	} else {
+		juLog("Asset \"%s\" doesn't exist", filename);
+	}
+
+	return out;
+}
+
+JUSprite juLoaderGetSprite(JULoader loader, const char *filename) {
+	JUAsset asset = juLoaderGet(loader, filename);
+	JUSprite out = NULL;
+
+	if (asset != NULL) {
+		if (asset->type == JU_ASSET_TYPE_SPRITE)
+			out = asset->Asset.sprite;
 		else
 			juLog("Asset \"%s\" is of incorrect type", filename);
 	} else {
@@ -979,14 +1008,15 @@ bool juKeyboardGetKeyReleased(SDL_Scancode key) {
 }
 
 /********************** Animations **********************/
-JUSprite juAnimationCreate(const char *filename, float x, float y, float w, float h, float delay) {
+JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h, float delay, int frames) {
+	// TODO: This
+	return NULL;
+}
+
+void juSpriteDraw(JUSprite spr, float x, float y) {
 	// TODO: This
 }
 
-void juAnimationDraw(JUSprite spr, float x, float y) {
-	// TODO: This
-}
-
-void juAnimationFree(JUSprite anim) {
+void juSpriteFree(JUSprite anim) {
 	// TODO: This
 }
