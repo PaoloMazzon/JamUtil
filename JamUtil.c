@@ -1009,14 +1009,59 @@ bool juKeyboardGetKeyReleased(SDL_Scancode key) {
 
 /********************** Animations **********************/
 JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h, float delay, int frames) {
-	// TODO: This
-	return NULL;
+	JUSprite spr = juMalloc(sizeof(struct JUSprite));
+	spr->Internal.tex = vk2dTextureLoad(filename);
+
+	// Set default values
+	if (spr->Internal.tex != NULL) {
+		spr->Internal.frames = frames == 0 ? 1 : frames;
+		spr->Internal.frame = 0;
+		spr->Internal.lastTime = SDL_GetPerformanceCounter();
+		spr->x = x;
+		spr->y = y;
+		spr->Internal.w = w;
+		spr->Internal.h = h;
+		spr->scaleX = 1;
+		spr->scaleY = 1;
+		spr->delay = delay;
+	} else {
+		juLog("Could not create sprite from image \"%s\"", filename);
+		free(spr);
+		spr = NULL;
+	}
+
+	return spr;
 }
 
 void juSpriteDraw(JUSprite spr, float x, float y) {
-	// TODO: This
+	// First we check if we must advance a frame
+	if ((double)(SDL_GetPerformanceCounter() - spr->Internal.lastTime) / (double)SDL_GetPerformanceFrequency() >= spr->delay) {
+		spr->Internal.frame = spr->Internal.frame == spr->Internal.frames - 1 ? 0 : spr->Internal.frame + 1;
+		spr->Internal.lastTime = SDL_GetPerformanceCounter();
+	}
+
+	// Calculate where in the texture to draw
+	float drawX = roundf(spr->x + ((int)(spr->Internal.frame * spr->Internal.w) % (int)(spr->Internal.tex->img->width - spr->x)));
+	float drawY = roundf(spr->y + (spr->Internal.h * floorf((spr->Internal.frame * spr->Internal.w) / (spr->Internal.tex->img->width - spr->x))));
+
+	vk2dRendererDrawTexture(
+			spr->Internal.tex,
+			x - spr->originX,
+			y - spr->originY,
+			spr->scaleX,
+			spr->scaleY,
+			spr->rotation,
+			spr->originX,
+			spr->originY,
+			drawX,
+			drawY,
+			spr->Internal.w,
+			spr->Internal.h);
 }
 
-void juSpriteFree(JUSprite anim) {
-	// TODO: This
+void juSpriteFree(JUSprite spr) {
+	if (spr != NULL) {
+		vk2dTextureFree(spr->Internal.tex);
+		free(spr);
+	}
 }

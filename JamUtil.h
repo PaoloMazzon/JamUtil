@@ -307,18 +307,22 @@ bool juKeyboardGetKeyReleased(SDL_Scancode key);
 
 /********************** Animations **********************/
 
-/// \brief Information for storign animations
+/// \brief Information for sprites
+///
+/// No "cells" are stored because the image coordinates that need to be
+/// drawn are calculated on the fly.
 struct JUSprite {
 	struct {
 		uint64_t lastTime; ///< Last time the animation was updated
 		uint32_t frames;   ///< Number of frames in the animation
+		uint32_t frame;    ///< Current frame in the animation
+		float w;           ///< Width of each cell
+		float h;           ///< Height of each cell
 		VK2DTexture tex;   ///< Sprite sheet
 	} Internal;     ///< Data for the sprite to keep track of itself
 	double delay;   ///< Time in seconds a single frame lasts
 	float x;        ///< X position in the texture where the sprite sheet starts
 	float y;        ///< Y position in the texture where the sprite sheet starts
-	float w;        ///< Width of each cell
-	float h;        ///< Height of each cell
 	float originX;  ///< X origin of the sprite (used for drawing position and rotation)
 	float originY;  ///< Y origin of the sprite (used for drawing position and rotation)
 	float scaleX;   ///< X scale of the sprite
@@ -337,11 +341,11 @@ struct JUSprite {
 /// \return Returns a new sprite or NULL if it failed
 JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h, float delay, int frames);
 
-/// \brief Draws an animation
+/// \brief Draws an animation, advancing the current frame if enough time has passed
 void juSpriteDraw(JUSprite spr, float x, float y);
 
 /// \brief Frees an animation from memory
-void juSpriteFree(JUSprite anim);
+void juSpriteFree(JUSprite spr);
 
 /********************** Asset Manager **********************/
 

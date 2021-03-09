@@ -19,8 +19,11 @@ Usage
 =====
 This is meant to be used the same way Vulkan2D is, in that you just add it as a submodule
 and include the few files in your CMake manually. On Windows you may need to link `dsound`
-as well depending on your build environment. Aside from that, just make sure to call `juInit`
-and `juClose`.
+as well depending on your build environment.
+
+Make sure to call `juInit` after SDL/VK2D and `juQuit` before you clean them up. Also call
+`juUpdate` before the SDL events loop each frame or certain systems won't work. There is also
+`juDelta` which will simply return the amount of time in seconds the last frame took to process.
 
 Asset Loader
 ------------
@@ -53,13 +56,21 @@ in a `JULoadedAsset` struct, which allows for the loading of sprite sheets and p
 things that would require parameters to be created with.
 
     JULoadedAsset FILES[] = {
-        {"myspritesheet.png", 10, 10, 20, 20, 0.2},
+        {"myspritesheet.png", 10, 10, 20, 20, 0.2, 5},
         {"myaudioclip.wav"},
         {"myfont.jufnt"},
         {"somebinaryfile.bin"},
     };
 
 Of course check `JamUtil.h` for the documentation on `JULoadedAsset`. 
+
+Sprites
+-------
+Sprites are pretty much what you would expect, you can load sprite sheets and draw
+animations. They also store some metadata like origin and rotation that you can
+change whenever. They are simple to load from sprite sheets, just specify the file
+and give some parameters and JamUtil will figure out how to draw it (see `main.c`
+for an example using a weird sprite sheet).
 
 Fonts
 -----

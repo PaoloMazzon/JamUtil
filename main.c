@@ -10,9 +10,9 @@ JULoadedAsset FILES[] = {
 	{"assets/comic.jufnt"},
 	{"assets/test_sound.wav"},
 	{"GenFont.py"},
-	{"assets/sheet.png", 0, 0, 50, 50, 0.5, 9},
+	{"assets/sheet.png", 50, 50, 50, 50, 0.1, 9},
 };
-const uint32_t FILE_COUNT = 3;
+const uint32_t FILE_COUNT = 5;
 
 vec4 DEFAULT_COLOUR = {1, 1, 1, 1};
 vec4 COLLISION_COLOUR = {1, 0, 0, 1};
@@ -40,6 +40,9 @@ int main() {
 		vk2dRendererStartFrame(clearColour);
 
 		// Draw your things
+		int mx, my;
+		SDL_GetMouseState(&mx, &my);
+		juSpriteDraw(juLoaderGetSprite(loader, "assets/sheet.png"), mx, my);
 		vk2dDrawTextureExt(juLoaderGetTexture(loader, "assets/image1.png"), 400, 300, 5, 5, 0, 0, 0);
 		juFontDrawWrapped(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 0, 800, "The quick brown fox jumps over the lazy dog.");
 
