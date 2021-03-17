@@ -326,6 +326,7 @@ JUFont juFontLoadFromImage(const char *image, uint32_t unicodeStart, uint32_t un
 			font->characters[i - unicodeStart].y = y;
 			font->characters[i - unicodeStart].w = w;
 			font->characters[i - unicodeStart].h = h;
+			font->characters[i - unicodeStart].drawn = true;
 			if (x + w >= font->bitmap->img->width) {
 				y += h;
 				x = 0;
@@ -396,6 +397,7 @@ void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, 
 	// Information needed to draw the text
 	float startX = x;
 	int len = strlen(buffer);
+	bool justMadeNewline = false;
 
 	// Loop through each character and render individually
 	for (int i = 0; i < len; i++) {
@@ -406,12 +408,17 @@ void juFontDrawWrapped(JUFont font, float x, float y, float w, const char *fmt, 
 			if ((c->w + x) - startX > w || buffer[i] == '\n') {
 				x = startX;
 				y += font->newLineHeight;
+				justMadeNewline = true;
+			} else {
+				justMadeNewline = false;
 			}
 
 			// Draw character (or not) and move the cursor forward
-			if (c->drawn)
-				vk2dRendererDrawTexture(font->bitmap, x, y, 1, 1, 0, 0, 0, c->x, c->y, c->w, c->h);
-			if (buffer[i] != '\n') x += c->w;
+			if (!(buffer[i] == ' ' && justMadeNewline)) {
+				if (c->drawn)
+					vk2dRendererDrawTexture(font->bitmap, x, y, 1, 1, 0, 0, 0, c->x, c->y, c->w, c->h);
+				if (buffer[i] != '\n') x += c->w;
+			}
 		}
 	}
 }
