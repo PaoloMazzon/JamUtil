@@ -357,15 +357,15 @@ void juFontFree(JUFont font) {
 
 void juFontDraw(JUFont font, float x, float y, const char *fmt, ...) {
 	// Var args stuff
-	char buffer[JU_STRING_BUFFER];
+	unsigned char buffer[JU_STRING_BUFFER];
 	va_list va;
 	va_start(va, fmt);
-	vsprintf(buffer, fmt, va);
+	vsprintf((void*)buffer, fmt, va);
 	va_end(va);
 
 	// Information needed to draw the text
 	float startX = x;
-	int len = strlen(buffer);
+	int len = strlen((void*)buffer);
 
 	// Loop through each character and render individually
 	for (int i = 0; i < len; i++) {
