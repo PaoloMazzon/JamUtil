@@ -344,6 +344,9 @@ JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h
 /// \brief Draws an animation, advancing the current frame if enough time has passed
 void juSpriteDraw(JUSprite spr, float x, float y);
 
+/// \brief Draws a specific frame of a frame, not doing any sprite updating or anything
+void juSpriteDrawFrame(JUSprite spr, uint32_t index, float x, float y);
+
 /// \brief Frees an animation from memory
 void juSpriteFree(JUSprite spr);
 

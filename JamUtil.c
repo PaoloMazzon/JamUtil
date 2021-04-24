@@ -727,7 +727,7 @@ bool juCircleCollision(JUCircle *c1, JUCircle *c2) {
 }
 
 bool juPointInRectangle(JURectangle *rect, float x, float y) {
-	return (x >= rect->x && x <= rect->x + rect->w && y >= rect->y && x <= rect->y + rect->h);
+	return (x >= rect->x && x <= rect->x + rect->w && y >= rect->y && y <= rect->y + rect->h);
 }
 
 bool juPointInCircle(JUCircle *circle, float x, float y) {
@@ -1064,6 +1064,28 @@ void juSpriteDraw(JUSprite spr, float x, float y) {
 			drawY,
 			spr->Internal.w,
 			spr->Internal.h);
+}
+
+void juSpriteDrawFrame(JUSprite spr, uint32_t index, float x, float y) {
+	if (index >= 0 && index < spr->Internal.frames) {
+		// Calculate where in the texture to draw
+		float drawX = roundf(spr->x + ((int)(index * spr->Internal.w) % (int)(spr->Internal.tex->img->width - spr->x)));
+		float drawY = roundf(spr->y + (spr->Internal.h * floorf((index * spr->Internal.w) / (spr->Internal.tex->img->width - spr->x))));
+
+		vk2dRendererDrawTexture(
+				spr->Internal.tex,
+				x - spr->originX,
+				y - spr->originY,
+				spr->scaleX,
+				spr->scaleY,
+				spr->rotation,
+				spr->originX,
+				spr->originY,
+				drawX,
+				drawY,
+				spr->Internal.w,
+				spr->Internal.h);
+	}
 }
 
 void juSpriteFree(JUSprite spr) {
