@@ -218,6 +218,9 @@ void juSaveStore(JUSave save, const char *filename);
 /// \brief Frees a save from memory
 void juSaveFree(JUSave save);
 
+/// \brief Returns true if the key exists in the save file
+bool juSaveKeyExists(JUSave save, const char *key);
+
 /// \brief Sets some data in a save
 void juSaveSetInt64(JUSave save, const char *key, int64_t data);
 

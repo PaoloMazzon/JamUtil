@@ -885,6 +885,10 @@ void juSaveSetInt64(JUSave save, const char *key, int64_t data) {
 	juSaveSetRawData(save, key, &out);
 }
 
+bool juSaveKeyExists(JUSave save, const char *key) {
+	return juSaveGetRawData(save, key) != NULL;
+}
+
 int64_t juSaveGetInt64(JUSave save, const char *key) {
 	JUData *data = juSaveGetRawData(save, key);
 
