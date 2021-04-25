@@ -711,7 +711,7 @@ void juSoundStopAll() {
 /********************** Collisions **********************/
 
 float juPointAngle(float x1, float y1, float x2, float y2) {
-	return atanf((x2 - x1) / (y2 - y1));
+	return atan2f(x2 - x1, y2 - y1);
 }
 
 float juPointDistance(float x1, float y1, float x2, float y2) {
