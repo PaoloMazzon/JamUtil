@@ -322,6 +322,7 @@ struct JUSprite {
 		float w;           ///< Width of each cell
 		float h;           ///< Height of each cell
 		VK2DTexture tex;   ///< Sprite sheet
+		bool copy;         ///< If this is a copy of a sprite or not (for the purposes of only freeing the texture once)
 	} Internal;     ///< Data for the sprite to keep track of itself
 	double delay;   ///< Time in seconds a single frame lasts
 	float x;        ///< X position in the texture where the sprite sheet starts
@@ -343,6 +344,12 @@ struct JUSprite {
 /// \param frames Animation frame count (a value of zero will be interpreted as 1)
 /// \return Returns a new sprite or NULL if it failed
 JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h, float delay, int frames);
+
+/// \brief Makes a copy of a sprite (usually only use this with a loader)
+/// \param original Sprite to copy from
+/// \warning The sprite copy does not own the texture pointer and if the original is freed the copy can still
+/// be safely freed but it can no longer be used.
+JUSprite juSpriteCopy(JUSprite original);
 
 /// \brief Draws an animation, advancing the current frame if enough time has passed
 void juSpriteDraw(JUSprite spr, float x, float y);

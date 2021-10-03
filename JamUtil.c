@@ -1035,12 +1035,20 @@ JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h
 		spr->scaleX = 1;
 		spr->scaleY = 1;
 		spr->delay = delay;
+		spr->Internal.copy = false;
 	} else {
 		juLog("Could not create sprite from image \"%s\"", filename);
 		free(spr);
 		spr = NULL;
 	}
 
+	return spr;
+}
+
+JUSprite juSpriteCopy(JUSprite original) {
+	JUSprite spr = juMalloc(sizeof(struct JUSprite));
+	memcpy(spr, original, sizeof(struct JUSprite));
+	spr->Internal.copy = true;
 	return spr;
 }
 
@@ -1094,7 +1102,8 @@ void juSpriteDrawFrame(JUSprite spr, uint32_t index, float x, float y) {
 
 void juSpriteFree(JUSprite spr) {
 	if (spr != NULL) {
-		vk2dTextureFree(spr->Internal.tex);
+		if (!spr->Internal.copy)
+			vk2dTextureFree(spr->Internal.tex);
 		free(spr);
 	}
 }
