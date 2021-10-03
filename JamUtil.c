@@ -710,11 +710,11 @@ void juSoundStopAll() {
 
 /********************** Collisions **********************/
 
-float juPointAngle(float x1, float y1, float x2, float y2) {
+float juPointAngle(double x1, double y1, double x2, double y2) {
 	return atan2f(x2 - x1, y2 - y1);
 }
 
-float juPointDistance(float x1, float y1, float x2, float y2) {
+float juPointDistance(double x1, double y1, double x2, double y2) {
 	return sqrtf(powf(y2 - y1, 2) + powf(x2 - x1, 2));
 }
 
@@ -726,12 +726,20 @@ bool juCircleCollision(JUCircle *c1, JUCircle *c2) {
 	return juPointDistance(c1->x, c1->y, c2->x, c2->y) < c1->r + c2->r;
 }
 
-bool juPointInRectangle(JURectangle *rect, float x, float y) {
+bool juPointInRectangle(JURectangle *rect, double x, double y) {
 	return (x >= rect->x && x <= rect->x + rect->w && y >= rect->y && y <= rect->y + rect->h);
 }
 
-bool juPointInCircle(JUCircle *circle, float x, float y) {
+bool juPointInCircle(JUCircle *circle, double x, double y) {
 	return juPointDistance(circle->x, circle->y, x, y) <= circle->r;
+}
+
+double juLerp(double percent, double start, double stop) {
+	return start + ((stop - start) * percent);
+}
+
+double juSerp(double percent, double start, double stop) {
+	return start + ((stop - start) * ((sin((percent * VK2D_PI) - (VK2D_PI / 2)) / 2) + 0.5));
 }
 
 /********************** File I/O **********************/

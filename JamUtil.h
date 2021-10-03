@@ -262,28 +262,28 @@ void juSaveSetData(JUSave save, const char *key, void *data, uint32_t size);
 void *juSaveGetData(JUSave save, const char *key, uint32_t *size);
 
 
-/********************** Collisions **********************/
+/********************** Collisions/Math **********************/
 
 /// \brief A simple rectangle
 struct JURectangle {
-	float x; ///< x position of the top left of the rectangle
-	float y; ///< y position of the top left of the rectangle
-	float w; ///< Width of the rectangle
-	float h; ///< Height of the rectangle
+	double x; ///< x position of the top left of the rectangle
+	double y; ///< y position of the top left of the rectangle
+	double w; ///< Width of the rectangle
+	double h; ///< Height of the rectangle
 };
 
 /// \brief A simple circle
 struct JUCircle {
-	float x; ///< x position of the center of the circle
-	float y; ///< y position of the center of the circle
-	float r; ///< Radius in pixels
+	double x; ///< x position of the center of the circle
+	double y; ///< y position of the center of the circle
+	double r; ///< Radius in pixels
 };
 
 /// \brief Gets the angle between two points
-float juPointAngle(float x1, float y1, float x2, float y2);
+float juPointAngle(double x1, double y1, double x2, double y2);
 
 /// \brief Gets the distance between two points
-float juPointDistance(float x1, float y1, float x2, float y2);
+float juPointDistance(double x1, double y1, double x2, double y2);
 
 /// \brief Checks for a collision between two rectangles
 bool juRectangleCollision(JURectangle *r1, JURectangle *r2);
@@ -292,10 +292,16 @@ bool juRectangleCollision(JURectangle *r1, JURectangle *r2);
 bool juCircleCollision(JUCircle *c1, JUCircle *c2);
 
 /// \brief Checks if a point exists within a given rectangle
-bool juPointInRectangle(JURectangle *rect, float x, float y);
+bool juPointInRectangle(JURectangle *rect, double x, double y);
 
 /// \brief Checks if a point exists within a given circle
-bool juPointInCircle(JUCircle *circle, float x, float y);
+bool juPointInCircle(JUCircle *circle, double x, double y);
+
+/// \brief Linear interpolation (given a start, stop, and percent it returns the point x% along that distance)
+double juLerp(double percent, double start, double stop);
+
+/// \brief Same as lerp but on a sin graph instead of a linear graph (for smooth transitions)
+double juSerp(double percent, double start, double stop);
 
 /********************** Keyboard **********************/
 
