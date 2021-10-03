@@ -70,7 +70,9 @@ Sprites are pretty much what you would expect, you can load sprite sheets and dr
 animations. They also store some metadata like origin and rotation that you can
 change whenever. They are simple to load from sprite sheets, just specify the file
 and give some parameters and JamUtil will figure out how to draw it (see `main.c`
-for an example using a weird sprite sheet).
+for an example using a weird sprite sheet). You can also copy sprites so you can have
+multiple sprites using the same texture/spritesheet and have them in different points
+of their own animations.
 
 Fonts
 -----
@@ -136,9 +138,9 @@ Buffers are the simplest piece of JamUtil, they mostly exist to help the loader.
 
 Very simple, just exists to make some tasks simple.
 
-Collisions
-----------
-The collision "subsystem" includes several functions that are all very simple to understand
+Collisions/Math
+---------------
+The collision/math "subsystem" includes several functions that are all very simple to understand
 and use, so here they are
 
  + Check for collisions between two rectangles
@@ -147,6 +149,8 @@ and use, so here they are
  + Check for a point in a circle
  + Get the distance between two points
  + Get the angle between two points
+ + Linear interpolation (lerp)
+ + Sin interpolation (same as linear interpolation but with a sin graph for a smooth start and stop)
  
 Again, for specifics, just check the header. Everything is documented.
 
