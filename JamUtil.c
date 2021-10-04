@@ -734,8 +734,8 @@ bool juPointInRotatedRectangle(JURectangle *rect, double rot, double originX, do
 	// Here we work in reverse so instead of rotating the rectangle we rotate the point we are checking in reverse about the origin
 	double distance = juPointDistance(originX + rect->x, originY + rect->y, x, y);
 	double angle = juPointAngle(originX + rect->x, originY + rect->y, x, y);
-	double newX = distance * cos(angle - rot);
-	double newY = distance * sin(angle - rot);
+	double newX = distance * cos((VK2D_PI - angle) - rot);
+	double newY = distance * sin((VK2D_PI - angle) - rot);
 	return juPointInRectangle(rect, newX, newY);
 }
 
