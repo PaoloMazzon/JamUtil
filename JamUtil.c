@@ -730,6 +730,15 @@ bool juPointInRectangle(JURectangle *rect, double x, double y) {
 	return (x >= rect->x && x <= rect->x + rect->w && y >= rect->y && y <= rect->y + rect->h);
 }
 
+bool juPointInRotatedRectangle(JURectangle *rect, double rot, double originX, double originY, double x, double y) {
+	// Here we work in reverse so instead of rotating the rectangle we rotate the point we are checking in reverse about the origin
+	double distance = juPointDistance(originX + rect->x, originY + rect->y, x, y);
+	double angle = juPointAngle(originX + rect->x, originY + rect->y, x, y);
+	double newX = distance * cos(angle - rot);
+	double newY = distance * sin(angle - rot);
+	return juPointInRectangle(rect, newX, newY);
+}
+
 bool juPointInCircle(JUCircle *circle, double x, double y) {
 	return juPointDistance(circle->x, circle->y, x, y) <= circle->r;
 }

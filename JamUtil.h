@@ -294,6 +294,9 @@ bool juCircleCollision(JUCircle *c1, JUCircle *c2);
 /// \brief Checks if a point exists within a given rectangle
 bool juPointInRectangle(JURectangle *rect, double x, double y);
 
+/// \brief Checks if a point exists within a given rotated rectangle
+bool juPointInRotatedRectangle(JURectangle *rect, double rot, double originX, double originY, double x, double y);
+
 /// \brief Checks if a point exists within a given circle
 bool juPointInCircle(JUCircle *circle, double x, double y);
 
