@@ -79,6 +79,25 @@ int main() {
 		vk2dRendererSetColourMod(VK2D_DEFAULT_COLOUR_MOD);
 		juFontDrawWrapped(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 0, 800, "The quick brown fox jumps over the lazy dog.");
 
+		// Draw angle lines
+		double x = 200;
+		double y = 200;
+		double theta = 0;
+		vk2dDrawCircle(x, y, 5);
+		vk2dRendererDrawLine(x, y, x + juCastX(30, theta), y + juCastY(30, theta));
+		x += 100;
+		theta += VK2D_PI / 2;
+		vk2dDrawCircle(x, y, 5);
+		vk2dRendererDrawLine(x, y, x + juCastX(30, theta), y + juCastY(30, theta + (VK2D_PI / 4)));
+		x += 100;
+		theta += VK2D_PI / 2;
+		vk2dDrawCircle(x, y, 5);
+		vk2dRendererDrawLine(x, y, x + juCastX(30, theta), y + juCastY(30, theta));
+		x += 100;
+		theta += VK2D_PI / 2;
+		vk2dDrawCircle(x, y, 5);
+		vk2dRendererDrawLine(x, y, x + juCastX(30, theta), y + juCastY(30, theta));
+
 		vk2dRendererEndFrame();
 	}
 

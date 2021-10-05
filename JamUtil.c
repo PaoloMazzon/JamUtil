@@ -734,8 +734,8 @@ bool juPointInRotatedRectangle(JURectangle *rect, double rot, double originX, do
 	// Here we work in reverse so instead of rotating the rectangle we rotate the point we are checking in reverse about the origin
 	double distance = juPointDistance(originX + rect->x, originY + rect->y, x, y);
 	double angle = juPointAngle(originX + rect->x, originY + rect->y, x, y);
-	double newX = distance * cos((VK2D_PI - angle) - rot);
-	double newY = distance * sin((VK2D_PI - angle) - rot);
+	double newX = juCastX(distance, angle);
+	double newY = juCastY(distance, angle);
 	return juPointInRectangle(rect, newX, newY);
 }
 
@@ -749,6 +749,14 @@ double juLerp(double percent, double start, double stop) {
 
 double juSerp(double percent, double start, double stop) {
 	return start + ((stop - start) * ((sin((percent * VK2D_PI) - (VK2D_PI / 2)) / 2) + 0.5));
+}
+
+double juCastX(double length, double angle) {
+	return length * cos(-angle);
+}
+
+double juCastY(double length, double angle) {
+	return length * sin(-angle);
 }
 
 /********************** File I/O **********************/

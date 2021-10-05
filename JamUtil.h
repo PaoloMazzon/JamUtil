@@ -306,6 +306,12 @@ double juLerp(double percent, double start, double stop);
 /// \brief Same as lerp but on a sin graph instead of a linear graph (for smooth transitions)
 double juSerp(double percent, double start, double stop);
 
+/// \brief Casts a ray out at a given angle and returns the x component
+double juCastX(double length, double angle);
+
+/// \brief Casts a ray out at a given angle and returns the y component
+double juCastY(double length, double angle);
+
 /********************** Keyboard **********************/
 
 /// \brief Checks if a key is currently pressed
