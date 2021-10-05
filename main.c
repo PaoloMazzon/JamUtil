@@ -36,23 +36,9 @@ int main() {
 	// Load resources
 	JULoader loader = juLoaderCreate(FILES, FILE_COUNT);
 	JURectangle rectangle = {100, 100, 100, 100};
-	double angle = VK2D_PI / 6;
+	double angle = VK2D_PI / 3;
 	double ox = 0;
 	double oy = 0;
-
-	// Make a collision map image
-	SDL_Surface *collisionMap = SDL_CreateRGBSurface(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, 0, 0, 0, 0);
-	for (int y = 0; y < WINDOW_HEIGHT; y++) {
-		for (int x = 0; x < WINDOW_WIDTH; x++) {
-			if (juPointInRotatedRectangle(&rectangle, angle, ox, oy, x, y))
-				((uint32_t*)collisionMap->pixels)[(WINDOW_WIDTH * y) + x] = 0xff0000ff;
-			else
-				((uint32_t*)collisionMap->pixels)[(WINDOW_WIDTH * y) + x] = 0xff000000;
-		}
-	}
-	VK2DImage testImage = vk2dImageFromPixels(vk2dRendererGetDevice(), collisionMap->pixels, WINDOW_WIDTH, WINDOW_HEIGHT);
-	VK2DTexture test = vk2dTextureLoadFromImage(testImage);
-	SDL_FreeSurface(collisionMap);
 
 	while (!stopRunning) {
 		juUpdate();
@@ -69,8 +55,6 @@ int main() {
 		SDL_GetMouseState(&mx, &my);
 		mx /= WINDOW_SCALE;
 		my /= WINDOW_SCALE;
-		if (juKeyboardGetKey(SDL_SCANCODE_SPACE))
-			vk2dDrawTexture(test, 0, 0);
 		juSpriteDraw(juLoaderGetSprite(loader, "assets/sheet.png"), 400, 500);
 		vk2dDrawTextureExt(juLoaderGetTexture(loader, "assets/image1.png"), 400, 300, 5, 5, 0, 0, 0);
 		if (juPointInRotatedRectangle(&rectangle, angle, ox, oy, mx, my))
@@ -79,25 +63,6 @@ int main() {
 		vk2dRendererSetColourMod(VK2D_DEFAULT_COLOUR_MOD);
 		juFontDrawWrapped(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 0, 800, "The quick brown fox jumps over the lazy dog.");
 
-		// Draw angle lines
-		double x = 200;
-		double y = 200;
-		double theta = 0;
-		vk2dDrawCircle(x, y, 5);
-		vk2dRendererDrawLine(x, y, x + juCastX(30, theta), y + juCastY(30, theta));
-		x += 100;
-		theta += VK2D_PI / 2;
-		vk2dDrawCircle(x, y, 5);
-		vk2dRendererDrawLine(x, y, x + juCastX(30, theta), y + juCastY(30, theta + (VK2D_PI / 4)));
-		x += 100;
-		theta += VK2D_PI / 2;
-		vk2dDrawCircle(x, y, 5);
-		vk2dRendererDrawLine(x, y, x + juCastX(30, theta), y + juCastY(30, theta));
-		x += 100;
-		theta += VK2D_PI / 2;
-		vk2dDrawCircle(x, y, 5);
-		vk2dRendererDrawLine(x, y, x + juCastX(30, theta), y + juCastY(30, theta));
-
 		vk2dRendererEndFrame();
 	}
 
@@ -105,8 +70,6 @@ int main() {
 
 	// Free assets
 	juLoaderFree(loader);
-	vk2dTextureFree(test);
-	vk2dImageFree(testImage);
 
 	juQuit();
 	vk2dRendererQuit();

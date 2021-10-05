@@ -711,7 +711,7 @@ void juSoundStopAll() {
 /********************** Collisions **********************/
 
 float juPointAngle(double x1, double y1, double x2, double y2) {
-	return atan2f(x2 - x1, y2 - y1);
+	return atan2f(x2 - x1, y2 - y1) - (VK2D_PI / 2);
 }
 
 float juPointDistance(double x1, double y1, double x2, double y2) {
@@ -734,8 +734,8 @@ bool juPointInRotatedRectangle(JURectangle *rect, double rot, double originX, do
 	// Here we work in reverse so instead of rotating the rectangle we rotate the point we are checking in reverse about the origin
 	double distance = juPointDistance(originX + rect->x, originY + rect->y, x, y);
 	double angle = juPointAngle(originX + rect->x, originY + rect->y, x, y);
-	double newX = juCastX(distance, angle);
-	double newY = juCastY(distance, angle);
+	double newX = rect->x + juCastX(distance, angle + rot);
+	double newY = rect->y + juCastY(distance, angle + rot);
 	return juPointInRectangle(rect, newX, newY);
 }
 
