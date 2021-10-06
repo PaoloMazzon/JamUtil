@@ -288,6 +288,9 @@ float juPointDistance(double x1, double y1, double x2, double y2);
 /// \brief Checks for a collision between two rectangles
 bool juRectangleCollision(JURectangle *r1, JURectangle *r2);
 
+/// \brief Checks for a collision between two rotated rectangles
+bool juRotatedRectangleCollision(JURectangle *r1, double rot1, double originX1, double originY1, JURectangle *r2, double rot2, double originX2, double originY2);
+
 /// \brief Checks for a collision between two circles
 bool juCircleCollision(JUCircle *c1, JUCircle *c2);
 

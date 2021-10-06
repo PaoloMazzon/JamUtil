@@ -722,6 +722,11 @@ bool juRectangleCollision(JURectangle *r1, JURectangle *r2) {
 	return (r1->y + r1->h > r2->y && r1->y < r2->y + r2->h && r1->x + r1->w > r2->x && r1->x < r2->x + r2->w);
 }
 
+bool juRotatedRectangleCollision(JURectangle *r1, double rot1, double originX1, double originY1, JURectangle *r2, double rot2, double originX2, double originY2) {
+	// Check if one of the vertices of either rectangle is in the other rectangle
+	return false; // TODO: This
+}
+
 bool juCircleCollision(JUCircle *c1, JUCircle *c2) {
 	return juPointDistance(c1->x, c1->y, c2->x, c2->y) < c1->r + c2->r;
 }

@@ -4,7 +4,7 @@
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
-const int WINDOW_SCALE = 3;
+const int WINDOW_SCALE = 1;
 
 JULoadedAsset FILES[] = {
 	{"assets/image1.png"},
@@ -39,6 +39,8 @@ int main() {
 	double angle = VK2D_PI / 3;
 	double ox = 0;
 	double oy = 0;
+	JURectangle movingRectangle = {100, 100, 100, 100};
+	double movingAngle = VK2D_PI / 6;
 
 	while (!stopRunning) {
 		juUpdate();
@@ -55,11 +57,14 @@ int main() {
 		SDL_GetMouseState(&mx, &my);
 		mx /= WINDOW_SCALE;
 		my /= WINDOW_SCALE;
+		movingRectangle.x = mx;
+		movingRectangle.y = my;
 		juSpriteDraw(juLoaderGetSprite(loader, "assets/sheet.png"), 400, 500);
 		vk2dDrawTextureExt(juLoaderGetTexture(loader, "assets/image1.png"), 400, 300, 5, 5, 0, 0, 0);
-		if (juPointInRotatedRectangle(&rectangle, angle, ox, oy, mx, my))
+		if (juRotatedRectangleCollision(&rectangle, angle, ox, oy, &movingRectangle, movingAngle, ox, oy))
 			vk2dRendererSetColourMod(COLLISION_COLOUR);
-		vk2dRendererDrawRectangle(rectangle.x, rectangle.y, rectangle.w, rectangle.h, juKeyboardGetKey(SDL_SCANCODE_RETURN) ? 0 : angle, ox, oy);
+		vk2dRendererDrawRectangle(rectangle.x, rectangle.y, rectangle.w, rectangle.h, angle, ox, oy);
+		vk2dRendererDrawRectangle(movingRectangle.x, movingRectangle.y, movingRectangle.w, movingRectangle.h, movingAngle, ox, oy);
 		vk2dRendererSetColourMod(VK2D_DEFAULT_COLOUR_MOD);
 		juFontDrawWrapped(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 0, 800, "The quick brown fox jumps over the lazy dog.");
 
