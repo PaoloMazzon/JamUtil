@@ -62,6 +62,9 @@ void juQuit();
 /// \brief Returns the time in seconds that the last frame took
 double juDelta();
 
+/// \brief Returns the time in seconds since juInit was called
+double juTime();
+
 /********************** Font **********************/
 
 /// \brief Data as it relates to storing a bitmap character for VK2D

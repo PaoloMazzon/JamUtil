@@ -10,11 +10,11 @@
 #include "JamUtil.h"
 
 /********************** Constants **********************/
-const uint32_t JU_BUCKET_SIZE = 100; // A good size for a small jam game, feel free to adjust
+const uint32_t JU_BUCKET_SIZE = 100;            // A good size for a small jam game, feel free to adjust
 const uint32_t JU_BINARY_FONT_HEADER_SIZE = 13; // Size of the header of jufnt files
-const uint32_t JU_STRING_BUFFER = 1024; // Maximum amount of text that can be rendered at once, a kilobyte is good for most things
-const uint32_t JU_SAVE_MAX_SIZE = 2000; // Maximum pieces of data that can be loaded from a save, anything more than this is probably a corrupt file
-const uint32_t JU_SAVE_MAX_KEY_SIZE = 20; // Maximum size a save key can be
+const uint32_t JU_STRING_BUFFER = 1024;         // Maximum amount of text that can be rendered at once, a kilobyte is good for most things
+const uint32_t JU_SAVE_MAX_SIZE = 2000;         // Maximum pieces of data that can be loaded from a save, anything more than this is probably a corrupt file
+const uint32_t JU_SAVE_MAX_KEY_SIZE = 20;       // Maximum size a save key can be
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 uint32_t RMASK = 0xff000000;
@@ -29,11 +29,12 @@ uint32_t AMASK = 0xff000000;
 #endif
 
 /********************** Globals **********************/
-static cs_context_t *gSoundContext = NULL;
-static int gKeyboardSize = 0;
-static uint8_t *gKeyboardState, *gKeyboardPreviousState;
-static double gDelta = 0;
-static uint64_t gLastTime = 0;
+static cs_context_t *gSoundContext = NULL;               // For the audio player
+static int gKeyboardSize = 0;                            // For keeping track of keys through SDL
+static uint8_t *gKeyboardState, *gKeyboardPreviousState; // Arrays for key states through SDL
+static double gDelta = 0;                                // Delta time
+static uint64_t gLastTime = 0;                           // For keeping track of delta
+static uint64_t gProgramStartTime = 0;                   // Time when the program started
 
 /********************** "Private" Structs **********************/
 
@@ -72,9 +73,10 @@ void juInit(SDL_Window *window) {
 	gKeyboardState = (void*)SDL_GetKeyboardState(&gKeyboardSize);
 	gKeyboardPreviousState = juMallocZero(gKeyboardSize);
 
-	// Delta
+	// Delta and other timing
 	gLastTime = SDL_GetPerformanceCounter();
 	gDelta = 1;
+	gProgramStartTime = SDL_GetPerformanceCounter();
 }
 
 void juUpdate() {
@@ -98,6 +100,10 @@ void juQuit() {
 
 double juDelta() {
 	return gDelta;
+}
+
+double juTime() {
+	return (double)(SDL_GetPerformanceCounter() - gProgramStartTime) / (double)SDL_GetPerformanceFrequency();
 }
 
 /********************** Static Functions **********************/

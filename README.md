@@ -151,6 +151,7 @@ and use, so here they are
  + Get the angle between two points
  + Linear interpolation (lerp)
  + Sin interpolation (same as linear interpolation but with a sin graph for a smooth start and stop)
+ + Rotate a point about an origin
  
 Again, for specifics, just check the header. Everything is documented.
 
