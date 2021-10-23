@@ -14,6 +14,7 @@ typedef struct JULoader *JULoader;
 typedef struct JUSound *JUSound;
 typedef struct JUPlayingSound JUPlayingSound;
 typedef struct JURectangle JURectangle;
+typedef struct JUPoint2D JUPoint2D;
 typedef struct JUCircle JUCircle;
 typedef struct JUData JUData;
 typedef struct JUSave *JUSave;
@@ -279,11 +280,20 @@ struct JUCircle {
 	double r; ///< Radius in pixels
 };
 
+/// \brief A 2D coordinate
+struct JUPoint2D {
+	double x; ///< x position in 2D space
+	double y; ///< y position in 2D space
+};
+
 /// \brief Gets the angle between two points
-float juPointAngle(double x1, double y1, double x2, double y2);
+double juPointAngle(double x1, double y1, double x2, double y2);
 
 /// \brief Gets the distance between two points
-float juPointDistance(double x1, double y1, double x2, double y2);
+double juPointDistance(double x1, double y1, double x2, double y2);
+
+/// \brief Rotates a point in 2D space about an (absolute) origin
+JUPoint2D juRotatePoint(double x, double y, double originX, double originY, double rotation);
 
 /// \brief Checks for a collision between two rectangles
 bool juRectangleCollision(JURectangle *r1, JURectangle *r2);

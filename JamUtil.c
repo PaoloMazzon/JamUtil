@@ -710,12 +710,23 @@ void juSoundStopAll() {
 
 /********************** Collisions **********************/
 
-float juPointAngle(double x1, double y1, double x2, double y2) {
+double juPointAngle(double x1, double y1, double x2, double y2) {
 	return atan2f(x2 - x1, y2 - y1) - (VK2D_PI / 2);
 }
 
-float juPointDistance(double x1, double y1, double x2, double y2) {
+double juPointDistance(double x1, double y1, double x2, double y2) {
 	return sqrtf(powf(y2 - y1, 2) + powf(x2 - x1, 2));
+}
+
+JUPoint2D juRotatePoint(double x, double y, double originX, double originY, double rotation) {
+	// Applies a 2D rotation matrix
+	JUPoint2D point = {x - originX, y - originY};
+	JUPoint2D final;
+	final.x = (point.x * cos(-rotation)) - (point.y * sin(-rotation));
+	final.y = (point.x * sin(-rotation)) + (point.y * cos(-rotation));
+	final.x += originX;
+	final.y += originY;
+	return final;
 }
 
 bool juRectangleCollision(JURectangle *r1, JURectangle *r2) {

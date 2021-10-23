@@ -64,7 +64,7 @@ int main() {
 		if (juRotatedRectangleCollision(&rectangle, angle, ox, oy, &movingRectangle, movingAngle, ox, oy))
 			vk2dRendererSetColourMod(COLLISION_COLOUR);
 		vk2dRendererDrawRectangle(rectangle.x, rectangle.y, rectangle.w, rectangle.h, angle, ox, oy);
-		vk2dRendererDrawRectangle(movingRectangle.x, movingRectangle.y, movingRectangle.w, movingRectangle.h, movingAngle, ox, oy);
+		//vk2dRendererDrawRectangle(movingRectangle.x, movingRectangle.y, movingRectangle.w, movingRectangle.h, movingAngle, ox, oy);
 		vk2dRendererSetColourMod(VK2D_DEFAULT_COLOUR_MOD);
 		juFontDrawWrapped(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 0, 800, "The quick brown fox jumps over the lazy dog.");
 
