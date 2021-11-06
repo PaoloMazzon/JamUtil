@@ -12,6 +12,7 @@
 #   -recursive (recursively searches directory)
 
 import sys
+import os
 
 # returns a map of all the program arguments
 def findArgs():
@@ -48,29 +49,53 @@ def fileAsString(filename):
 
 # locates all files in a directory and returns all of their paths in a list
 def findFiles(directory, recursive):
-	pass # TODO: This
+	files = []
+	for dir, dirList, fileList in os.walk(directory):
+		if recursive or directory == dir:
+			for fileName in fileList:
+				files += [dir + "/" + fileName]
+	return files
 
-# assembles a C array and struct for the assets given filenames and returns it
-def assembleC(files):
+# assembles a C header for the assets given filenames and returns it
+def assembleHeader(files):
+	for fileName in files:
+		extension = fileName[fileName.rfind("."):]
+		if extension in (".png", ".jpg", ".jpeg", ".bmp"): # texture
+			pass # TODO: Implement these
+		elif extension in (".wav"): # audio
+			pass
+		elif extension in (".jufnt"): # font
+			pass
+		else: # buffer
+			pass
+
+# assembles a C source file to correspond to the header and returns it
+def assembleSource(files):
 	pass # TODO: This
 
 def main():
 	arguments = findArgs()
 	if "dir" in arguments and "var" in arguments and "struct" in arguments and "o" in arguments:
 		# final output txt
-		outputFile = "#pragma once\n\n"
-		if "header" in arguments: outputFile = fileAsString(arguments["header"]) + "\n\n"
+		outputHeader = "#pragma once\n\n"
+		outputSource = "#include \"" + arguments["o"] + "\""
+		if "header" in arguments: outputHeader = fileAsString(arguments["header"]) + "\n\n"
 
 		# find all files in the selected directory
 		files = findFiles(arguments["dir"], "recursive" in arguments)
 
-		# construct the meat of the file
-		outputFile += assembleC(files)
+		# construct the header
+		outputHeader += assembleHeader(files)
 
-		# output to file
+		# construct the source
+		outputSource += assembleSource(files)
+
+		# output source and header
 		with open(arguments["o"], "w") as f:
-			f.write(outputFile + "\n")
+			f.write(outputHeader + "\n")
 			if "footer" in arguments: f.write("\n" + fileAsString(arguments["footer"]))
+		with open(arguments["o"][:-1] + "c", "w") as f: # TODO: Properly change the extension
+			f.write(outputSource + "\n")
 
 	else:
 		printHelp()
