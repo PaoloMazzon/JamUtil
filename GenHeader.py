@@ -57,21 +57,36 @@ def findFiles(directory, recursive):
 	return files
 
 # assembles a C header for the assets given filenames and returns it
-def assembleHeader(files):
+def assembleHeader(files, structName, varName):
+	structString = "typedef struct " + structName + " {\nJULoader loader;\n"
+	variableString = "JULoadedAsset " + varName + "[] = {\n"
+	codeString = "#ifdef " + structName.upper() + "_IMPLEMENTATION\n" + structName + " *build" + structName + "() {\n    " + structName + " *s = malloc(sizeof(struct " + structName + "));\n    s->loader = juLoaderCreate(" + varName + ", " + str(len(files)) + ");\n"
+
 	for fileName in files:
 		extension = fileName[fileName.rfind("."):]
+		name = fileName[fileName.rfind("/") + 1:fileName.rfind(".")] # name of file without path or extension
 		if extension in (".png", ".jpg", ".jpeg", ".bmp"): # texture
-			pass # TODO: Implement these
+			structString += "    VK2DTexture tex" + name + ";\n"
+			variableString += "    {\"" + name + "\"},\n"
+			codeString += "    s->tex" + name + " = juLoaderGetTexture(s->loader, " + fileName + ");\n"
 		elif extension in (".wav"): # audio
-			pass
+			structString += "    JUSound snd" + name + ";\n"
+			variableString += "    {\"" + name + "\"},\n"
+			codeString += "    s->snd" + name + " = juLoaderGetSound(s->loader, " + fileName + ");\n"
 		elif extension in (".jufnt"): # font
-			pass
+			structString += "    JUFont fnt" + name + ";\n"
+			variableString += "    {\"" + name + "\"},\n"
+			codeString += "    s->fnt" + name + " = juLoaderGetFont(s->loader, " + fileName + ");\n"
 		else: # buffer
-			pass
+			structString += "    JUBuffer buf" + name + ";\n"
+			variableString += "    {\"" + name + "\"},\n"
+			codeString += "    s->buf" + name + " = juLoaderGetBuffer(s->loader, " + fileName + ");\n"
 
-# assembles a C source file to correspond to the header and returns it
-def assembleSource(files):
-	pass # TODO: This
+	structString += "} " + structName + ";\n\n"
+	variableString += "};\n\n"
+	codeString += "}\n\nvoid destroy" + structName + "(" + structName + " *s) {\n    juLoaderFree(s->loader);\n    free(s);\n#endif\n"
+
+	return variableString + structString + codeString
 
 def main():
 	arguments = findArgs()
@@ -87,15 +102,10 @@ def main():
 		# construct the header
 		outputHeader += assembleHeader(files)
 
-		# construct the source
-		outputSource += assembleSource(files)
-
 		# output source and header
 		with open(arguments["o"], "w") as f:
 			f.write(outputHeader + "\n")
 			if "footer" in arguments: f.write("\n" + fileAsString(arguments["footer"]))
-		with open(arguments["o"][:-1] + "c", "w") as f: # TODO: Properly change the extension
-			f.write(outputSource + "\n")
 
 	else:
 		printHelp()
