@@ -557,7 +557,7 @@ JULoader juLoaderCreate(JULoadedAsset *files, uint32_t fileCount) {
 		} else if (strcmp(extension, "png") == 0 || strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0 || strcmp(extension, "bmp") == 0) {
 			if (files[i].h + files[i].w + files[i].delay != 0) {
 				// Sprite
-				asset->type = JU_ASSET_TYPE_SPRITE;
+				asset->type = JU_ASSET_TYPE_SPRITE; // TODO: Check for existing textures with the same name first
 				asset->Asset.sprite = juSpriteCreate(files[i].path, files[i].x, files[i].y, files[i].w, files[i].h, files[i].delay, files[i].frames);
 				if (asset->Asset.sprite != NULL) {
 					asset->Asset.sprite->originX = files[i].originX;
@@ -1088,6 +1088,26 @@ JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h
 		free(spr);
 		spr = NULL;
 	}
+
+	return spr;
+}
+
+JUSprite juSpriteFrom(VK2DTexture tex, float x, float y, float w, float h, float delay, int frames) {
+	JUSprite spr = juMalloc(sizeof(struct JUSprite));
+	spr->Internal.tex = tex;
+
+	// Set default values
+	spr->Internal.frames = frames == 0 ? 1 : frames;
+	spr->Internal.frame = 0;
+	spr->Internal.lastTime = SDL_GetPerformanceCounter();
+	spr->x = x;
+	spr->y = y;
+	spr->Internal.w = w;
+	spr->Internal.h = h;
+	spr->scaleX = 1;
+	spr->scaleY = 1;
+	spr->delay = delay;
+	spr->Internal.copy = true;
 
 	return spr;
 }

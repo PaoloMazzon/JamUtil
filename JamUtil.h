@@ -376,6 +376,10 @@ struct JUSprite {
 /// \return Returns a new sprite or NULL if it failed
 JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h, float delay, int frames);
 
+/// \brief The same as `juSpriteCreate` except it creates a sprite from an already existing texture (which is not freed with the sprite)
+/// \return Returns a new sprite that uses `tex` but does not technically own `tex`
+JUSprite juSpriteFrom(VK2DTexture tex, float x, float y, float w, float h, float delay, int frames);
+
 /// \brief Makes a copy of a sprite (usually only use this with a loader)
 /// \param original Sprite to copy from
 /// \warning The sprite copy does not own the texture pointer and if the original is freed the copy can still
