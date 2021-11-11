@@ -505,12 +505,12 @@ static void juLoaderAdd(JULoader loader, JUAsset asset) {
 }
 
 // Just gets the raw asset from the loader
-static JUAsset juLoaderGet(JULoader loader, const char *key) {
+static JUAsset juLoaderGet(JULoader loader, const char *key, JUAssetType type) {
 	JUAsset current = loader->assets[juHash(key)];
 	bool found = false;
 
 	while (!found) {
-		if (current != NULL && strcmp(current->name, key) == 0) // this is the rigt asset
+		if (current != NULL && strcmp(current->name, key) == 0 && current->type == type) // this is the right asset
 			found = true;
 		else if (current != NULL) // wrong one, next one down the chain
 			current = current->next;
@@ -558,7 +558,13 @@ JULoader juLoaderCreate(JULoadedAsset *files, uint32_t fileCount) {
 			if (files[i].h + files[i].w + files[i].delay != 0) {
 				// Sprite
 				asset->type = JU_ASSET_TYPE_SPRITE; // TODO: Check for existing textures with the same name first
-				asset->Asset.sprite = juSpriteCreate(files[i].path, files[i].x, files[i].y, files[i].w, files[i].h, files[i].delay, files[i].frames);
+
+				// Check if we already loaded the texture
+				JUAsset tex = juLoaderGet(loader, asset->name, JU_ASSET_TYPE_TEXTURE);
+				if (tex != NULL)
+					asset->Asset.sprite = juSpriteFrom(tex->Asset.tex, files[i].x, files[i].y, files[i].w, files[i].h, files[i].delay, files[i].frames);
+				else
+					asset->Asset.sprite = juSpriteCreate(files[i].path, files[i].x, files[i].y, files[i].w, files[i].h, files[i].delay, files[i].frames);
 				if (asset->Asset.sprite != NULL) {
 					asset->Asset.sprite->originX = files[i].originX;
 					asset->Asset.sprite->originY = files[i].originY;
@@ -583,14 +589,11 @@ JULoader juLoaderCreate(JULoadedAsset *files, uint32_t fileCount) {
 }
 
 VK2DTexture juLoaderGetTexture(JULoader loader, const char *filename) {
-	JUAsset asset = juLoaderGet(loader, filename);
+	JUAsset asset = juLoaderGet(loader, filename, JU_ASSET_TYPE_TEXTURE);
 	VK2DTexture out = NULL;
 
 	if (asset != NULL) {
-		if (asset->type == JU_ASSET_TYPE_TEXTURE)
-			out = asset->Asset.tex;
-		else
-			juLog("Asset \"%s\" is of incorrect type", filename);
+		out = asset->Asset.tex;
 	} else {
 		juLog("Asset \"%s\" was never loaded", filename);
 	}
@@ -599,14 +602,11 @@ VK2DTexture juLoaderGetTexture(JULoader loader, const char *filename) {
 }
 
 JUFont juLoaderGetFont(JULoader loader, const char *filename) {
-	JUAsset asset = juLoaderGet(loader, filename);
+	JUAsset asset = juLoaderGet(loader, filename, JU_ASSET_TYPE_FONT);
 	JUFont out = NULL;
 
 	if (asset != NULL) {
-		if (asset->type == JU_ASSET_TYPE_FONT)
-			out = asset->Asset.font;
-		else
-			juLog("Asset \"%s\" is of incorrect type", filename);
+		out = asset->Asset.font;
 	} else {
 		juLog("Asset \"%s\" doesn't exist", filename);
 	}
@@ -615,14 +615,11 @@ JUFont juLoaderGetFont(JULoader loader, const char *filename) {
 }
 
 JUSound juLoaderGetSound(JULoader loader, const char *filename) {
-	JUAsset asset = juLoaderGet(loader, filename);
+	JUAsset asset = juLoaderGet(loader, filename, JU_ASSET_TYPE_SOUND);
 	JUSound out = NULL;
 
 	if (asset != NULL) {
-		if (asset->type == JU_ASSET_TYPE_SOUND)
-			out = asset->Asset.sound;
-		else
-			juLog("Asset \"%s\" is of incorrect type", filename);
+		out = asset->Asset.sound;
 	} else {
 		juLog("Asset \"%s\" doesn't exist", filename);
 	}
@@ -631,14 +628,11 @@ JUSound juLoaderGetSound(JULoader loader, const char *filename) {
 }
 
 JUBuffer juLoaderGetBuffer(JULoader loader, const char *filename) {
-	JUAsset asset = juLoaderGet(loader, filename);
+	JUAsset asset = juLoaderGet(loader, filename, JU_ASSET_TYPE_BUFFER);
 	JUBuffer out = NULL;
 
 	if (asset != NULL) {
-		if (asset->type == JU_ASSET_TYPE_BUFFER)
-			out = asset->Asset.buffer;
-		else
-			juLog("Asset \"%s\" is of incorrect type", filename);
+		out = asset->Asset.buffer;
 	} else {
 		juLog("Asset \"%s\" doesn't exist", filename);
 	}
@@ -647,14 +641,11 @@ JUBuffer juLoaderGetBuffer(JULoader loader, const char *filename) {
 }
 
 JUSprite juLoaderGetSprite(JULoader loader, const char *filename) {
-	JUAsset asset = juLoaderGet(loader, filename);
+	JUAsset asset = juLoaderGet(loader, filename, JU_ASSET_TYPE_SPRITE);
 	JUSprite out = NULL;
 
 	if (asset != NULL) {
-		if (asset->type == JU_ASSET_TYPE_SPRITE)
-			out = asset->Asset.sprite;
-		else
-			juLog("Asset \"%s\" is of incorrect type", filename);
+		out = asset->Asset.sprite;
 	} else {
 		juLog("Asset \"%s\" doesn't exist", filename);
 	}
