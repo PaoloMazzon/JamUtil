@@ -118,7 +118,7 @@ def assembleHeader(files, varName, structName, mapFile):
 			structString += "    JUFont fnt" + name + ";\n"
 			variableString += "    {\"" + fileName + "\"},\n"
 			codeString += "    s->fnt" + name + " = juLoaderGetFont(s->loader, \"" + fileName + "\");\n"
-		elif not fileName == mapFile: # buffer
+		else: # buffer
 			structString += "    JUBuffer buf" + name + ";\n"
 			variableString += "    {\"" + fileName + "\"},\n"
 			codeString += "    s->buf" + name + " = juLoaderGetBuffer(s->loader, \"" + fileName + "\");\n"
