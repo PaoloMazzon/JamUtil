@@ -103,6 +103,7 @@ def assembleHeader(files, varName, structName, mapFile):
 	codeString = "#ifdef " + structName.upper() + "_IMPLEMENTATION\n" + structName + " *build" + structName + "() {\n    " + structName + " *s = malloc(sizeof(struct " + structName + "));\n    s->loader = juLoaderCreate(" + varName + ", " + str(len(files)) + ");\n"
 
 	for fileName in files:
+		fileName = fileName.replace("\\", "/")
 		extension = fileName[fileName.rfind("."):]
 		name = fileName[fileName.rfind("/") + 1:fileName.rfind(".")] # name of file without path or extension
 		if extension in (".png", ".jpg", ".jpeg", ".bmp"): # texture
