@@ -98,9 +98,15 @@ def assembleSpriteCode(filename, section):
 
 # assembles a C header for the assets given filenames and returns it
 def assembleHeader(files, varName, structName, mapFile):
+	if not mapFile == None:
+		parser = configparser.ConfigParser()
+		parser.read(mapFile)
+		totalAssets = len(files) + len(parser.sections())
+	else:
+		totalAssets = len(files)
 	structString = "typedef struct " + structName + " {\n    JULoader loader;\n"
-	variableString = "// Forward declare the asset array\nextern JULoadedAsset " + varName + "[" + str(len(files)) + "];\n\n#ifdef " + structName.upper() + "_IMPLEMENTATION\nJULoadedAsset " + varName + "[] = {\n"
-	codeString = "// Functions to create and destroy the asset struct\n" + structName + " *build" + structName + "();\nvoid destroy" + structName + "(" + structName + " *s);\n\n#ifdef " + structName.upper() + "_IMPLEMENTATION\n" + structName + " *build" + structName + "() {\n    " + structName + " *s = malloc(sizeof(struct " + structName + "));\n    s->loader = juLoaderCreate(" + varName + ", " + str(len(files)) + ");\n"
+	variableString = "// Forward declare the asset array\nextern JULoadedAsset " + varName + "[" + str(totalAssets) + "];\n\n#ifdef " + structName.upper() + "_IMPLEMENTATION\nJULoadedAsset " + varName + "[] = {\n"
+	codeString = "// Functions to create and destroy the asset struct\n" + structName + " *build" + structName + "();\nvoid destroy" + structName + "(" + structName + " *s);\n\n#ifdef " + structName.upper() + "_IMPLEMENTATION\n" + structName + " *build" + structName + "() {\n    " + structName + " *s = malloc(sizeof(struct " + structName + "));\n    s->loader = juLoaderCreate(" + varName + ", " + str(totalAssets) + ");\n"
 
 	for fileName in files:
 		fileName = fileName.replace("\\", "/")
