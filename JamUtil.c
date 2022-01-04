@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <VK2D/stb_image.h>
 #include <SDL2/SDL_syswm.h>
+#include <pthread.h>
 
 #define CUTE_SOUND_IMPLEMENTATION
 #include "cute_sound.h"
@@ -28,14 +29,6 @@ uint32_t BMASK = 0x00ff0000;
 uint32_t AMASK = 0xff000000;
 #endif
 
-/********************** Globals **********************/
-static cs_context_t *gSoundContext = NULL;               // For the audio player
-static int gKeyboardSize = 0;                            // For keeping track of keys through SDL
-static uint8_t *gKeyboardState, *gKeyboardPreviousState; // Arrays for key states through SDL
-static double gDelta = 0;                                // Delta time
-static uint64_t gLastTime = 0;                           // For keeping track of delta
-static uint64_t gProgramStartTime = 0;                   // Time when the program started
-
 /********************** "Private" Structs **********************/
 
 /// \brief Character dimensions in the jufnt file
@@ -52,11 +45,39 @@ typedef struct JUBinaryFont {
 	void *png;                              ///< Raw bytes for the png image
 } JUBinaryFont;
 
+/// \brief Information for jobs
+typedef struct JUJobSystem {
+	int threadCount;             ///< Number of worker threads being used
+	pthread_t *threads;          ///< Thread vector
+	int queueListSize;           ///< Actual size of the queue vector
+	_Atomic int queueSize;       ///< Number of elements waiting in the queue
+	JUJob *queue;                ///< Queue (vector)
+	pthread_mutex_t queueAccess; ///< Mutex that protects access to the queue
+	_Atomic int *channels;       ///< Variable number of channels
+	int channelCount;            ///< Number of available channels
+	_Atomic bool kill;           ///< For shutting down all jobs
+} JUJobSystem;
+
+/********************** Globals **********************/
+static cs_context_t *gSoundContext = NULL;               // For the audio player
+static int gKeyboardSize = 0;                            // For keeping track of keys through SDL
+static uint8_t *gKeyboardState, *gKeyboardPreviousState; // Arrays for key states through SDL
+static double gDelta = 0;                                // Delta time
+static uint64_t gLastTime = 0;                           // For keeping track of delta
+static uint64_t gProgramStartTime = 0;                   // Time when the program started
+static JUJobSystem gJobSystem;                           // Information for the job system
+
 /********************** Top-Level **********************/
+
+// Worker thread
+static void *juWorkerThread(void *data) {
+	// TODO: Pull from the queue
+	return NULL;
+}
 
 static void juLog(const char *out, ...);
 static void *juMallocZero(uint32_t size);
-void juInit(SDL_Window *window) {
+void juInit(SDL_Window *window, int jobChannels) {
 	// Sound
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version)
@@ -72,6 +93,27 @@ void juInit(SDL_Window *window) {
 	// Keyboard controls
 	gKeyboardState = (void*)SDL_GetKeyboardState(&gKeyboardSize);
 	gKeyboardPreviousState = juMallocZero(gKeyboardSize);
+
+	// Setup job system if any channels were specified
+	if (jobChannels > 0) {
+		gJobSystem.channelCount = jobChannels;
+		gJobSystem.threadCount = SDL_GetCPUCount() - 1;
+		gJobSystem.channels = calloc(jobChannels, sizeof(_Atomic int));
+		gJobSystem.threads = malloc(gJobSystem.threadCount * sizeof(pthread_t));
+
+		// Create worker threads
+		for (int i = 0; i < gJobSystem.threadCount; i++) {
+			pthread_attr_t attr;
+			pthread_attr_init(&attr);
+			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+			pthread_create(&gJobSystem.threads[i], &attr, juWorkerThread, NULL);
+		}
+
+		// Setup the mutex
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutex_init(&gJobSystem.queueAccess, &attr);
+	}
 
 	// Delta and other timing
 	gLastTime = SDL_GetPerformanceCounter();
@@ -90,6 +132,21 @@ void juUpdate() {
 }
 
 void juQuit() {
+	// Kill the jobs
+	if (gJobSystem.channelCount > 0) {
+		gJobSystem.kill = true;
+
+		// Wait for all threads to die
+		for (int i = 0; i < gJobSystem.threadCount; i++)
+			pthread_join(gJobSystem.threads[i], NULL);
+
+		// Free the lists
+		free(gJobSystem.threads);
+		free(gJobSystem.channels);
+		free(gJobSystem.queue);
+		pthread_mutex_destroy(&gJobSystem.queueAccess);
+	}
+
 	free(gKeyboardPreviousState);
 	gKeyboardPreviousState = NULL;
 	gKeyboardState = NULL;
@@ -478,6 +535,16 @@ void juBufferSaveRaw(void *data, uint32_t size, const char *filename) {
 	} else {
 		juLog("Failed to open file \"%s\"", filename);
 	}
+}
+
+/********************** Jobs System **********************/
+
+void juJobQueue(JUJob job) {
+	// TODO: This
+}
+
+void juJobWaitChannel(int channel) {
+	// TODO: This
 }
 
 /********************** Asset Loader **********************/

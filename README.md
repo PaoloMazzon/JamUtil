@@ -14,6 +14,7 @@ Features
  + Save/load buffers to/from files easily
  + Simplified keyboard controls
  + Basic collisions
+ + Simple-to-use job system (in progress)
  
 Usage
 =====
@@ -187,6 +188,15 @@ and use, so here they are
  + Rotate a point about an origin
  
 Again, for specifics, just check the header. Everything is documented.
+
+Jobs System
+-----------
+You may utilize a job system by specifying a number of channels above 0 when initializing JamUtil.
+With an active job system you may queue jobs and wait for channels to finish. JamUtil will create
+one worker thread per CPU core minus one to account for the main thread, and when you queue a job
+the next available worker thread will pull the job and complete it. Waiting for a channel waits until
+all jobs on that channel are complete, and for that reason it is not recommended to queue jobs from
+a job on the same channel.
 
 Example CMake
 =============

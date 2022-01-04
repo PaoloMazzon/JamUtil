@@ -21,6 +21,7 @@ typedef struct JUSave *JUSave;
 typedef struct JUBuffer *JUBuffer;
 typedef struct JUSprite *JUSprite;
 typedef struct JULoadedAsset JULoadedAsset;
+typedef struct JUJob JUJob;
 
 /********************** Enums **********************/
 
@@ -51,7 +52,8 @@ typedef enum {
 
 /// \brief Initializes everything, make sure to call this before anything else
 /// \param window Window that is used
-void juInit(SDL_Window *window);
+/// \param jobChannels Number of channels for jobs (8 is a good number, 0 if you're not using jobs)
+void juInit(SDL_Window *window, int jobChannels);
 
 /// \brief Keeps various systems up to date, call every frame at the start before the SDL event loop
 void juUpdate();
@@ -394,6 +396,21 @@ void juSpriteDrawFrame(JUSprite spr, uint32_t index, float x, float y);
 
 /// \brief Frees an animation from memory
 void juSpriteFree(JUSprite spr);
+
+/********************** Jobs System **********************/
+
+/// \brief Description of a job
+struct JUJob {
+	int channel;        ///< Channel the job is on
+	void (*job)(void*); ///< Job function
+	void *data;         ///< Data to pass to the function when its executed
+};
+
+/// \brief Queues a job to be run as soon as a worker thread is available
+void juJobQueue(JUJob job);
+
+/// \brief Waits for all jobs on a channel to be completed
+void juJobWaitChannel(int channel);
 
 /********************** Asset Manager **********************/
 
