@@ -576,7 +576,7 @@ void juJobQueue(JUJob job) {
 	gJobSystem.queue[gJobSystem.queueSize] = job;
 	gJobSystem.queueSize++;
 
-	pthread_mutex_unlock(gJobSystem.queueAccess);
+	pthread_mutex_unlock(&gJobSystem.queueAccess);
 }
 
 void juJobWaitChannel(int channel) {

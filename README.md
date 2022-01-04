@@ -14,7 +14,7 @@ Features
  + Save/load buffers to/from files easily
  + Simplified keyboard controls
  + Basic collisions
- + Simple-to-use job system (in progress)
+ + Simple-to-use job system
  
 Usage
 =====
