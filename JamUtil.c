@@ -17,6 +17,10 @@ const uint32_t JU_STRING_BUFFER = 1024;         // Maximum amount of text that c
 const uint32_t JU_SAVE_MAX_SIZE = 2000;         // Maximum pieces of data that can be loaded from a save, anything more than this is probably a corrupt file
 const uint32_t JU_SAVE_MAX_KEY_SIZE = 20;       // Maximum size a save key can be
 const int JU_LIST_EXTENSION = 5;                // How many elements to extend lists by
+const JUEntityID JU_INVALID_ENTITY = -1;
+const JUComponentID JU_NO_COMPONENT = -1;
+const int JU_JOB_CHANNEL_SYSTEMS = 0;
+const int JU_JOB_CHANNEL_COPY = 1;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 uint32_t RMASK = 0xff000000;
@@ -59,6 +63,18 @@ typedef struct JUJobSystem {
 	_Atomic bool kill;           ///< For shutting down all jobs
 } JUJobSystem;
 
+/// \brief Information for ECS
+typedef struct JUECS {
+	JUEntity *entities;                                ///< Vector of all entities
+	int entityCount;                                   ///< Number of entities
+	const JUSystem *systems;                           ///< List of all systems
+	int systemCount;                                   ///< Amount of systems
+	const JUComponentVector* const previousComponents; ///< Previous frame's components
+	JUComponentVector *components;                     ///< This frame's components
+	int componentCount;                                ///< Amount of components
+	const size_t *componentSizes;                      ///< Size of each component in bytes
+} JUECS;
+
 /********************** Globals **********************/
 static cs_context_t *gSoundContext = NULL;               // For the audio player
 static int gKeyboardSize = 0;                            // For keeping track of keys through SDL
@@ -67,6 +83,7 @@ static double gDelta = 0;                                // Delta time
 static uint64_t gLastTime = 0;                           // For keeping track of delta
 static uint64_t gProgramStartTime = 0;                   // Time when the program started
 static JUJobSystem gJobSystem;                           // Information for the job system
+static JUECS gECS;                                       // Entity component system
 
 /********************** Static Functions **********************/
 
@@ -345,12 +362,14 @@ double juTime() {
 
 /********************** ECS **********************/
 
-void juECSAddComponents(size_t *componentSizes, int componentCount) {
-	// TODO: This
+void juECSAddComponents(const size_t *componentSizes, int componentCount) {
+	gECS.componentCount = componentCount;
+	gECS.componentSizes = componentSizes;
 }
 
 void juECSAddSystems(const JUSystem *systems, int systemCount) {
-	// TODO: This
+	gECS.systems = systems;
+	gECS.systemCount = systemCount;
 }
 
 void juECSAddEntity(JUEntitySpec *spec, int count) {

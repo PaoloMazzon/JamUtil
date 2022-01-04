@@ -63,11 +63,18 @@ extern const JUEntityID JU_INVALID_ENTITY;
 ///< Component doesn't exist in this entity
 extern const JUComponentID JU_NO_COMPONENT;
 
+///< Job channel for systems
+extern const int JU_JOB_CHANNEL_SYSTEMS;
+
+///< Job channel for component copy
+extern const int JU_JOB_CHANNEL_COPY;
+
 /********************** Top-Level **********************/
 
 /// \brief Initializes everything, make sure to call this before anything else
 /// \param window Window that is used
 /// \param jobChannels Number of channels for jobs (8 is a good number, 0 if you're not using jobs)
+/// \warning ECS requires jobs to be enabled and at least 2 channels, 0 and 1 are reserved for ECS
 void juInit(SDL_Window *window, int jobChannels);
 
 /// \brief Keeps various systems up to date, call every frame at the start before the SDL event loop
@@ -104,9 +111,9 @@ struct JUSystem {
 };
 
 /// \brief Adds all components to the ECS (you may only call this once)
-/// \param componentSizes Array of each components' size in bytes
+/// \param componentSizes Array of each components' size in bytes (must persist throughout program, use constants)
 /// \param componentCount Number of components in the array
-void juECSAddComponents(size_t *componentSizes, int componentCount);
+void juECSAddComponents(const size_t *componentSizes, int componentCount);
 
 /// \brief Adds all systems to the ECS (only call once)
 /// \param systems Array of systems (must persist throughout program, use constants)
@@ -118,10 +125,10 @@ void juECSAddSystems(const JUSystem *systems, int systemCount);
 /// \param count Number of new entities from this spec to create
 void juECSAddEntity(JUEntitySpec *spec, int count);
 
-/// \brief Runs all systems (will use jobs if available)
+/// \brief Runs all systems
 void juECSRunSystems();
 
-/// \brief Copies all current frame data into the previous frame's data for next frame (will use jobs if available)
+/// \brief Copies all current frame data into the previous frame's data for next frame
 void juECSCopyState();
 
 /********************** Font **********************/
