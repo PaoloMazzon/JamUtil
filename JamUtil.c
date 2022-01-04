@@ -16,6 +16,7 @@ const uint32_t JU_BINARY_FONT_HEADER_SIZE = 13; // Size of the header of jufnt f
 const uint32_t JU_STRING_BUFFER = 1024;         // Maximum amount of text that can be rendered at once, a kilobyte is good for most things
 const uint32_t JU_SAVE_MAX_SIZE = 2000;         // Maximum pieces of data that can be loaded from a save, anything more than this is probably a corrupt file
 const uint32_t JU_SAVE_MAX_KEY_SIZE = 20;       // Maximum size a save key can be
+const int JU_LIST_EXTENSION = 5;                // How many elements to extend lists by
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 uint32_t RMASK = 0xff000000;
@@ -50,7 +51,7 @@ typedef struct JUJobSystem {
 	int threadCount;             ///< Number of worker threads being used
 	pthread_t *threads;          ///< Thread vector
 	int queueListSize;           ///< Actual size of the queue vector
-	_Atomic int queueSize;       ///< Number of elements waiting in the queue
+	int queueSize;               ///< Number of elements waiting in the queue
 	JUJob *queue;                ///< Queue (vector)
 	pthread_mutex_t queueAccess; ///< Mutex that protects access to the queue
 	_Atomic int *channels;       ///< Variable number of channels
@@ -71,7 +72,29 @@ static JUJobSystem gJobSystem;                           // Information for the 
 
 // Worker thread
 static void *juWorkerThread(void *data) {
-	// TODO: Pull from the queue
+	bool haveJob;
+	JUJob job;
+
+	while (!gJobSystem.kill) {
+		// Wait for a job
+		haveJob = false;
+		while (!haveJob) {
+			pthread_mutex_lock(&gJobSystem.queueAccess);
+			if (gJobSystem.queueSize > 0) {
+				job = gJobSystem.queue[0];
+				haveJob = true;
+				gJobSystem.queueSize--;
+				for (int i = 0; i < gJobSystem.queueSize; i++)
+					gJobSystem.queue[i] = gJobSystem.queue[i + 1];
+			}
+			pthread_mutex_unlock(&gJobSystem.queueAccess);
+		}
+
+		// Execute the job
+		job.job(job.data);
+		gJobSystem.channels[job.channel] -= 1;
+	}
+
 	return NULL;
 }
 
@@ -540,11 +563,27 @@ void juBufferSaveRaw(void *data, uint32_t size, const char *filename) {
 /********************** Jobs System **********************/
 
 void juJobQueue(JUJob job) {
-	// TODO: This
+	gJobSystem.channels[job.channel] += 1;
+
+	// Wait for the queue and queue it
+	pthread_mutex_lock(gJobSystem.queueAccess);
+
+	// Extend queue list
+	if (gJobSystem.queueListSize == gJobSystem.queueSize) {
+		gJobSystem.queue = realloc(gJobSystem.queue, gJobSystem.queueListSize + JU_LIST_EXTENSION);
+		gJobSystem.queueListSize += JU_LIST_EXTENSION;
+	}
+	gJobSystem.queue[gJobSystem.queueSize] = job;
+	gJobSystem.queueSize++;
+
+	pthread_mutex_unlock(gJobSystem.queueAccess);
 }
 
 void juJobWaitChannel(int channel) {
-	// TODO: This
+	bool done = false;
+	while (!done) {
+		done = gJobSystem.channels[channel] == 0;
+	}
 }
 
 /********************** Asset Loader **********************/
