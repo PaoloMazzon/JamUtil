@@ -22,6 +22,13 @@ typedef struct JUBuffer *JUBuffer;
 typedef struct JUSprite *JUSprite;
 typedef struct JULoadedAsset JULoadedAsset;
 typedef struct JUJob JUJob;
+typedef struct JUEntity JUEntity;
+typedef int32_t JUEntityID;
+typedef int32_t JUComponentID;   ///< Points to a specific component for a given entity
+typedef int32_t JUComponent;     ///< Points to a component array that contains all of that type of component
+typedef void *JUComponentVector; ///< Vector of all of a given component
+typedef struct JUSystem JUSystem;
+typedef struct JUEntitySpec JUEntitySpec;
 
 /********************** Enums **********************/
 
@@ -48,6 +55,14 @@ typedef enum {
 	JU_DATA_TYPE_MAX = 7,
 } JUDataType;
 
+/********************** Constants **********************/
+
+///< Entity that doesn't exist
+extern const JUEntityID JU_INVALID_ENTITY;
+
+///< Component doesn't exist in this entity
+extern const JUComponentID JU_NO_COMPONENT;
+
 /********************** Top-Level **********************/
 
 /// \brief Initializes everything, make sure to call this before anything else
@@ -66,6 +81,48 @@ double juDelta();
 
 /// \brief Returns the time in seconds since juInit was called
 double juTime();
+
+/********************** ECS **********************/
+
+/// \brief Outline of an entity thats easier to specify
+struct JUEntitySpec {
+	JUComponent *components; ///< List of all components that will be used
+	int componentCount;      ///< How many components this entity uses
+};
+
+/// \brief An entity in the ECS system (the user only keeps track of an entity id)
+struct JUEntity {
+	JUComponentID *components; ///< A list specifying where this entity's component is or if it has this component for each component
+	bool exists;               ///< Whether or not this entity was destroyed
+};
+
+/// \brief Information needed to operate a system
+struct JUSystem {
+	JUComponent *requiresComponents; ///< List of all required components for this system to run
+	int requiredComponentCount;      ///< How many components are required
+	void (*system)(JUEntity *entity, const JUComponentVector* const, JUComponentVector*); ///< System function
+};
+
+/// \brief Adds all components to the ECS (you may only call this once)
+/// \param componentSizes Array of each components' size in bytes
+/// \param componentCount Number of components in the array
+void juECSAddComponents(size_t *componentSizes, int componentCount);
+
+/// \brief Adds all systems to the ECS (only call once)
+/// \param systems Array of systems (must persist throughout program, use constants)
+/// \param systemCount Number of systems
+void juECSAddSystems(const JUSystem *systems, int systemCount);
+
+/// \brief Adds an entity to the system
+/// \param spec Entity spec, entity will be created from this
+/// \param count Number of new entities from this spec to create
+void juECSAddEntity(JUEntitySpec *spec, int count);
+
+/// \brief Runs all systems (will use jobs if available)
+void juECSRunSystems();
+
+/// \brief Copies all current frame data into the previous frame's data for next frame (will use jobs if available)
+void juECSCopyState();
 
 /********************** Font **********************/
 

@@ -68,124 +68,6 @@ static uint64_t gLastTime = 0;                           // For keeping track of
 static uint64_t gProgramStartTime = 0;                   // Time when the program started
 static JUJobSystem gJobSystem;                           // Information for the job system
 
-/********************** Top-Level **********************/
-
-// Worker thread
-static void *juWorkerThread(void *data) {
-	bool haveJob;
-	JUJob job;
-
-	while (!gJobSystem.kill) {
-		// Wait for a job
-		haveJob = false;
-		while (!haveJob) {
-			pthread_mutex_lock(&gJobSystem.queueAccess);
-			if (gJobSystem.queueSize > 0) {
-				job = gJobSystem.queue[0];
-				haveJob = true;
-				gJobSystem.queueSize--;
-				for (int i = 0; i < gJobSystem.queueSize; i++)
-					gJobSystem.queue[i] = gJobSystem.queue[i + 1];
-			}
-			pthread_mutex_unlock(&gJobSystem.queueAccess);
-		}
-
-		// Execute the job
-		job.job(job.data);
-		gJobSystem.channels[job.channel] -= 1;
-	}
-
-	return NULL;
-}
-
-static void juLog(const char *out, ...);
-static void *juMallocZero(uint32_t size);
-void juInit(SDL_Window *window, int jobChannels) {
-	// Sound
-	SDL_SysWMinfo wmInfo;
-	SDL_VERSION(&wmInfo.version)
-	SDL_GetWindowWMInfo(window, &wmInfo);
-	HWND hwnd = wmInfo.info.win.window;
-	gSoundContext = cs_make_context(hwnd, 41000, 1024 * 1024 * 10, 20, NULL);
-	if (gSoundContext != NULL) {
-		cs_spawn_mix_thread(gSoundContext);
-	} else {
-		juLog("Failed to initialize sound.");
-	}
-
-	// Keyboard controls
-	gKeyboardState = (void*)SDL_GetKeyboardState(&gKeyboardSize);
-	gKeyboardPreviousState = juMallocZero(gKeyboardSize);
-
-	// Setup job system if any channels were specified
-	if (jobChannels > 0) {
-		gJobSystem.channelCount = jobChannels;
-		gJobSystem.threadCount = SDL_GetCPUCount() - 1;
-		gJobSystem.channels = calloc(jobChannels, sizeof(_Atomic int));
-		gJobSystem.threads = malloc(gJobSystem.threadCount * sizeof(pthread_t));
-
-		// Create worker threads
-		for (int i = 0; i < gJobSystem.threadCount; i++) {
-			pthread_attr_t attr;
-			pthread_attr_init(&attr);
-			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-			pthread_create(&gJobSystem.threads[i], &attr, juWorkerThread, NULL);
-		}
-
-		// Setup the mutex
-		pthread_mutexattr_t attr;
-		pthread_mutexattr_init(&attr);
-		pthread_mutex_init(&gJobSystem.queueAccess, &attr);
-	}
-
-	// Delta and other timing
-	gLastTime = SDL_GetPerformanceCounter();
-	gDelta = 1;
-	gProgramStartTime = SDL_GetPerformanceCounter();
-}
-
-void juUpdate() {
-	// Update delta
-	gDelta = (double)(SDL_GetPerformanceCounter() - gLastTime) / (double)SDL_GetPerformanceFrequency();
-	gLastTime = SDL_GetPerformanceCounter();
-
-	// Update keyboard
-	memcpy(gKeyboardPreviousState, gKeyboardState, gKeyboardSize);
-	SDL_PumpEvents();
-}
-
-void juQuit() {
-	// Kill the jobs
-	if (gJobSystem.channelCount > 0) {
-		gJobSystem.kill = true;
-
-		// Wait for all threads to die
-		for (int i = 0; i < gJobSystem.threadCount; i++)
-			pthread_join(gJobSystem.threads[i], NULL);
-
-		// Free the lists
-		free(gJobSystem.threads);
-		free(gJobSystem.channels);
-		free(gJobSystem.queue);
-		pthread_mutex_destroy(&gJobSystem.queueAccess);
-	}
-
-	free(gKeyboardPreviousState);
-	gKeyboardPreviousState = NULL;
-	gKeyboardState = NULL;
-	gKeyboardSize = 0;
-	cs_shutdown_context(gSoundContext);
-	gSoundContext = NULL;
-}
-
-double juDelta() {
-	return gDelta;
-}
-
-double juTime() {
-	return (double)(SDL_GetPerformanceCounter() - gProgramStartTime) / (double)SDL_GetPerformanceFrequency();
-}
-
 /********************** Static Functions **********************/
 
 // Logs messages, used all over the place
@@ -343,6 +225,144 @@ static JUBinaryFont juLoadBinaryFont(const char *file, bool *error) {
 	free(buffer);
 
 	return font;
+}
+
+// Worker thread
+static void *juWorkerThread(void *data) {
+	bool haveJob;
+	JUJob job;
+
+	while (!gJobSystem.kill) {
+		// Wait for a job
+		haveJob = false;
+		while (!haveJob) {
+			pthread_mutex_lock(&gJobSystem.queueAccess);
+			if (gJobSystem.queueSize > 0) {
+				job = gJobSystem.queue[0];
+				haveJob = true;
+				gJobSystem.queueSize--;
+				for (int i = 0; i < gJobSystem.queueSize; i++)
+					gJobSystem.queue[i] = gJobSystem.queue[i + 1];
+			}
+			pthread_mutex_unlock(&gJobSystem.queueAccess);
+		}
+
+		// Execute the job
+		job.job(job.data);
+		gJobSystem.channels[job.channel] -= 1;
+	}
+
+	return NULL;
+}
+
+/********************** Top-Level **********************/
+
+void juInit(SDL_Window *window, int jobChannels) {
+	// Sound
+	SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version)
+	SDL_GetWindowWMInfo(window, &wmInfo);
+	HWND hwnd = wmInfo.info.win.window;
+	gSoundContext = cs_make_context(hwnd, 41000, 1024 * 1024 * 10, 20, NULL);
+	if (gSoundContext != NULL) {
+		cs_spawn_mix_thread(gSoundContext);
+	} else {
+		juLog("Failed to initialize sound.");
+	}
+
+	// Keyboard controls
+	gKeyboardState = (void*)SDL_GetKeyboardState(&gKeyboardSize);
+	gKeyboardPreviousState = juMallocZero(gKeyboardSize);
+
+	// Setup job system if any channels were specified
+	if (jobChannels > 0) {
+		gJobSystem.channelCount = jobChannels;
+		gJobSystem.threadCount = SDL_GetCPUCount() - 1;
+		gJobSystem.channels = juMallocZero(jobChannels * sizeof(_Atomic int));
+		gJobSystem.threads = juMalloc(gJobSystem.threadCount * sizeof(pthread_t));
+
+		// Create worker threads
+		for (int i = 0; i < gJobSystem.threadCount; i++) {
+			pthread_attr_t attr;
+			pthread_attr_init(&attr);
+			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+			pthread_create(&gJobSystem.threads[i], &attr, juWorkerThread, NULL);
+		}
+
+		// Setup the mutex
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutex_init(&gJobSystem.queueAccess, &attr);
+	}
+
+	// Delta and other timing
+	gLastTime = SDL_GetPerformanceCounter();
+	gDelta = 1;
+	gProgramStartTime = SDL_GetPerformanceCounter();
+}
+
+void juUpdate() {
+	// Update delta
+	gDelta = (double)(SDL_GetPerformanceCounter() - gLastTime) / (double)SDL_GetPerformanceFrequency();
+	gLastTime = SDL_GetPerformanceCounter();
+
+	// Update keyboard
+	memcpy(gKeyboardPreviousState, gKeyboardState, gKeyboardSize);
+	SDL_PumpEvents();
+}
+
+void juQuit() {
+	// Kill the jobs
+	if (gJobSystem.channelCount > 0) {
+		gJobSystem.kill = true;
+
+		// Wait for all threads to die
+		for (int i = 0; i < gJobSystem.threadCount; i++)
+			pthread_join(gJobSystem.threads[i], NULL);
+
+		// Free the lists
+		free(gJobSystem.threads);
+		free(gJobSystem.channels);
+		free(gJobSystem.queue);
+		pthread_mutex_destroy(&gJobSystem.queueAccess);
+	}
+
+	free(gKeyboardPreviousState);
+	gKeyboardPreviousState = NULL;
+	gKeyboardState = NULL;
+	gKeyboardSize = 0;
+	cs_shutdown_context(gSoundContext);
+	gSoundContext = NULL;
+}
+
+double juDelta() {
+	return gDelta;
+}
+
+double juTime() {
+	return (double)(SDL_GetPerformanceCounter() - gProgramStartTime) / (double)SDL_GetPerformanceFrequency();
+}
+
+/********************** ECS **********************/
+
+void juECSAddComponents(size_t *componentSizes, int componentCount) {
+	// TODO: This
+}
+
+void juECSAddSystems(const JUSystem *systems, int systemCount) {
+	// TODO: This
+}
+
+void juECSAddEntity(JUEntitySpec *spec, int count) {
+	// TODO: This
+}
+
+void juECSRunSystems() {
+	// TODO: This
+}
+
+void juECSCopyState() {
+	// TODO: This
 }
 
 /********************** Font **********************/
@@ -570,7 +590,7 @@ void juJobQueue(JUJob job) {
 
 	// Extend queue list
 	if (gJobSystem.queueListSize == gJobSystem.queueSize) {
-		gJobSystem.queue = realloc(gJobSystem.queue, gJobSystem.queueListSize + JU_LIST_EXTENSION);
+		gJobSystem.queue = juRealloc(gJobSystem.queue, gJobSystem.queueListSize + JU_LIST_EXTENSION);
 		gJobSystem.queueListSize += JU_LIST_EXTENSION;
 	}
 	gJobSystem.queue[gJobSystem.queueSize] = job;
