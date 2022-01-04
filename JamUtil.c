@@ -73,6 +73,7 @@ typedef struct JUECS {
 	JUComponentVector *components;                     ///< This frame's components
 	int componentCount;                                ///< Amount of components
 	const size_t *componentSizes;                      ///< Size of each component in bytes
+	int *componentCounts;                              ///< Number of components in each component list
 } JUECS;
 
 /********************** Globals **********************/
@@ -362,6 +363,55 @@ double juTime() {
 
 /********************** ECS **********************/
 
+// Sets a component state
+static void juECSSetComponentState(JUComponent component, JUComponentID id, bool val) {
+	if (id != JU_NO_COMPONENT)
+		*((((uint8_t*)(&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id) + gECS.componentSizes[component]) = val;
+}
+
+// Gets a component state
+static bool juECSGetComponentState(JUComponent component, JUComponentID id) {
+	if (id != JU_NO_COMPONENT)
+		return *((((uint8_t*)(&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id) + gECS.componentSizes[component]);
+}
+
+// Job for running a system
+static void juECSJobSystem(void *ptr) {
+	JUSystem *system = ptr;
+
+	// Find all entities that satisfy this job
+	for (int i = 0; i < gECS.entityCount; i++) {
+		if (gECS.entities[i].exists) {
+			// Make sure all components are present
+			bool fulfillsReqs = true;
+			for (int j = 0; j < system->requiredComponentCount; j++)
+				if (gECS.entities[i].components[system->requiredComponents[j]] == JU_NO_COMPONENT)
+					fulfillsReqs = false;
+
+			// Run the system on this entity
+			if (fulfillsReqs)
+				system->system(&gECS.entities[i], gECS.previousComponents, gECS.components);
+		}
+	}
+}
+
+// Job for copying over components
+static void juECSJobCopy(void *ptr) {
+	// Wipe all entities that need to be destroyed
+	for (int i = 0; i < gECS.entityCount; i++) {
+		if (gECS.entities[i].exists && gECS.entities[i].queueDeletion) {
+			// Wipe all components
+			for (int j = 0; j < gECS.componentCount; j++) {
+				juECSSetComponentState(j, gECS.entities[i].components[j], false);
+			}
+		}
+	}
+
+	// Copy all components
+	for (int i = 0; i < gECS.componentCount; i++)
+		memcpy((void*)gECS.previousComponents[i], gECS.components[i], (gECS.componentSizes[i] + 1) * gECS.componentCounts[i]);
+}
+
 void juECSAddComponents(const size_t *componentSizes, int componentCount) {
 	gECS.componentCount = componentCount;
 	gECS.componentSizes = componentSizes;
@@ -372,16 +422,37 @@ void juECSAddSystems(const JUSystem *systems, int systemCount) {
 	gECS.systemCount = systemCount;
 }
 
-void juECSAddEntity(JUEntitySpec *spec, int count) {
+JUEntityID juECSAddEntity(JUEntitySpec *spec) {
 	// TODO: This
+	return JU_INVALID_ENTITY;
+}
+
+void *juECSGetComponent(JUComponent component, JUComponentID id) {
+	if (id != JU_NO_COMPONENT)
+		return (((uint8_t*)(&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id);
+}
+
+const void *juECSGetPreviousComponent(JUComponent component, JUComponentID id) {
+	if (id != JU_NO_COMPONENT)
+		return (((uint8_t*)(&gECS.previousComponents[component])) + ((gECS.componentSizes[component]) + 1) * id);
 }
 
 void juECSRunSystems() {
-	// TODO: This
+	// Make sure all data is copied before starting next frame processing
+	juJobWaitChannel(JU_JOB_CHANNEL_COPY);
+
+	// Run all systems as jobs
+	for (int i = 0; i < gECS.systemCount; i++) {
+		JUJob job = {JU_JOB_CHANNEL_SYSTEMS, juECSJobSystem, (void*)&gECS.systems[i]};
+		juJobQueue(job);
+	}
 }
 
 void juECSCopyState() {
-	// TODO: This
+	// Wait for all systems to finish before copying
+	juJobWaitChannel(JU_JOB_CHANNEL_SYSTEMS);
+	JUJob job = {JU_JOB_CHANNEL_COPY, juECSJobCopy, NULL};
+	juJobQueue(job);
 }
 
 /********************** Font **********************/
