@@ -15,6 +15,7 @@ Features
  + Simplified keyboard controls
  + Basic collisions
  + Simple-to-use job system
+ + Entity component system (ECS) (in progress)
  
 Usage
 =====
@@ -197,6 +198,10 @@ one worker thread per CPU core minus one to account for the main thread, and whe
 the next available worker thread will pull the job and complete it. Waiting for a channel waits until
 all jobs on that channel are complete, and for that reason it is not recommended to queue jobs from
 a job on the same channel.
+
+Entity Component System (ECS)
+-----------------------------
+TODO: This
 
 Example CMake
 =============
