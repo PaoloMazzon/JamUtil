@@ -783,7 +783,7 @@ void juJobQueue(JUJob job) {
 
 	// Extend queue list
 	if (gJobSystem.queueListSize == gJobSystem.queueSize) {
-		gJobSystem.queue = juRealloc(gJobSystem.queue, (gJobSystem.queueListSize + JU_LIST_EXTENSION) * sizeof(JUJob *));
+		gJobSystem.queue = juRealloc(gJobSystem.queue, (gJobSystem.queueListSize + JU_LIST_EXTENSION) * sizeof(JUJob));
 		gJobSystem.queueListSize += JU_LIST_EXTENSION;
 	}
 	gJobSystem.queue[gJobSystem.queueSize] = job;
