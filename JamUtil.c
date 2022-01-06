@@ -74,6 +74,7 @@ typedef struct JUECS {
 	const int componentCount;                          ///< Amount of components
 	const size_t *componentSizes;                      ///< Size of each component in bytes
 	int *componentListSizes;                           ///< Actual size of component list
+	pthread_mutex_t createEntityAccess;                ///< Lock so only 1 entity may be created at a time
 } JUECS;
 
 /********************** Globals **********************/
@@ -312,10 +313,12 @@ void juInit(SDL_Window *window, int jobChannels) {
 			pthread_create(&gJobSystem.threads[i], &attr, juWorkerThread, NULL);
 		}
 
-		// Setup the mutex
+		// Setup the mutexes
 		pthread_mutexattr_t attr;
 		pthread_mutexattr_init(&attr);
 		pthread_mutex_init(&gJobSystem.queueAccess, &attr);
+		pthread_mutexattr_init(&attr);
+		pthread_mutex_init(&gECS.createEntityAccess, &attr);
 	}
 
 	// Delta and other timing
@@ -341,6 +344,9 @@ void juQuit() {
 		for (int i = 0; i < gECS.componentCount; i++) {
 			juFree(gECS.components[i]);
 			juFree(gECS.previousComponents[i]);
+		}
+		for (int i = 0; i < gECS.entityCount; i++) {
+			juFree(gECS.entities[i].components);
 		}
 		juFree(gECS.entities);
 		juFree((void*)gECS.previousComponents);
@@ -466,7 +472,10 @@ void juECSAddComponents(const size_t *componentSizes, int componentCount) {
 	*((int*)&gECS.componentCount) = componentCount;
 	gECS.componentSizes = componentSizes;
 
-	// TODO: Set up other lists
+	// Create lists for components
+	gECS.components = juMallocZero(componentCount * sizeof(JUComponentVector));
+	*((void**)&gECS.previousComponents) = juMallocZero(componentCount * sizeof(JUComponentVector));
+	gECS.componentListSizes = juMallocZero(componentCount * sizeof(int));
 }
 
 void juECSAddSystems(const JUSystem *systems, int systemCount) {
@@ -475,8 +484,35 @@ void juECSAddSystems(const JUSystem *systems, int systemCount) {
 }
 
 JUEntityID juECSAddEntity(JUEntitySpec *spec) {
-	// TODO: A lock on creating entities so only one of this function may be called at a time
-	return JU_INVALID_ENTITY;
+	JUEntityID entity = JU_INVALID_ENTITY;
+	pthread_mutex_lock(&gECS.createEntityAccess);
+
+	// Find an available spot in the list
+	for (int i = 0; i < gECS.entityCount && entity == JU_INVALID_ENTITY; i++)
+		if (!gECS.entities[i].exists)
+			entity = i;
+
+	// No spot, extend the list
+	if (entity == JU_INVALID_ENTITY) {
+		gECS.entities = juRealloc(gECS.entities, (gECS.entityCount + JU_LIST_EXTENSION) * sizeof(struct JUEntity));
+		entity = gECS.entityCount;
+
+		// Wipe the new entities
+		for (int i = gECS.entityCount; i < gECS.entityCount + JU_LIST_EXTENSION; i++) {
+			gECS.entities[i].exists = false;
+			gECS.entities[i].queueDeletion = false;
+			gECS.entities[i].type = 0;
+			gECS.entities[i].components = juMallocZero(sizeof(JUComponentID) * gECS.componentCount);
+		}
+		gECS.entityCount += JU_LIST_EXTENSION;
+	}
+
+	// We have an entity, get it some components
+	for (int i = 0; i < spec->componentCount; i++)
+		gECS.entities[entity].components[spec->components[i]] = juECSGetNewComponent(spec->components[i]);
+
+	pthread_mutex_unlock(&gECS.createEntityAccess);
+	return entity;
 }
 
 void *juECSGetComponent(JUComponent component, JUComponentID id) {
