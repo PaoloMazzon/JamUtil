@@ -69,7 +69,7 @@ typedef struct JUECS {
 	int entityCount;                                   ///< Number of entities
 	const JUSystem *systems;                           ///< List of all systems
 	int systemCount;                                   ///< Amount of systems
-	const JUComponentVector* const previousComponents; ///< Previous frame's components
+	JUComponentVector* previousComponents;             ///< Previous frame's components
 	JUComponentVector *components;                     ///< This frame's components
 	const int componentCount;                          ///< Amount of components
 	const size_t *componentSizes;                      ///< Size of each component in bytes
@@ -259,21 +259,21 @@ static void *juWorkerThread(void *data) {
 	while (!gJobSystem.kill) {
 		// Wait for a job
 		haveJob = false;
-		while (!haveJob) {
-			pthread_mutex_lock(&gJobSystem.queueAccess);
-			if (gJobSystem.queueSize > 0) {
-				job = gJobSystem.queue[0];
-				haveJob = true;
-				gJobSystem.queueSize--;
-				for (int i = 0; i < gJobSystem.queueSize; i++)
-					gJobSystem.queue[i] = gJobSystem.queue[i + 1];
-			}
-			pthread_mutex_unlock(&gJobSystem.queueAccess);
+		pthread_mutex_lock(&gJobSystem.queueAccess);
+		if (gJobSystem.queueSize > 0) {
+			job = gJobSystem.queue[0];
+			haveJob = true;
+			gJobSystem.queueSize--;
+			for (int i = 0; i < gJobSystem.queueSize; i++)
+				gJobSystem.queue[i] = gJobSystem.queue[i + 1];
 		}
+		pthread_mutex_unlock(&gJobSystem.queueAccess);
 
 		// Execute the job
-		job.job(job.data);
-		gJobSystem.channels[job.channel] -= 1;
+		if (haveJob) {
+			job.job(job.data);
+			gJobSystem.channels[job.channel] -= 1;
+		}
 	}
 
 	return NULL;
@@ -309,7 +309,6 @@ void juInit(SDL_Window *window, int jobChannels) {
 		for (int i = 0; i < gJobSystem.threadCount; i++) {
 			pthread_attr_t attr;
 			pthread_attr_init(&attr);
-			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 			pthread_create(&gJobSystem.threads[i], &attr, juWorkerThread, NULL);
 		}
 
@@ -349,7 +348,7 @@ void juQuit() {
 			juFree(gECS.entities[i].components);
 		}
 		juFree(gECS.entities);
-		juFree((void*)gECS.previousComponents);
+		juFree(gECS.previousComponents);
 		juFree(gECS.components);
 
 		// Destroy job system
@@ -407,6 +406,12 @@ static void *juECSGetComponentFromID(JUComponent component, JUComponentID id) {
 	return NULL;
 }
 
+static void *juECSGetPreviousComponentFromID(JUComponent component, JUComponentID id) {
+	if (id != JU_NO_COMPONENT)
+		return (((uint8_t*)(&gECS.previousComponents[component])) + ((gECS.componentSizes[component]) + 1) * id);
+	return NULL;
+}
+
 // Creates a new components or grabs a stagnant one
 static JUComponentID juECSGetNewComponent(JUComponent component) {
 	JUComponentID id = JU_NO_COMPONENT;
@@ -420,7 +425,7 @@ static JUComponentID juECSGetNewComponent(JUComponent component) {
 	if (id == JU_NO_COMPONENT) {
 		// Should probably fix this lmfao
 		gECS.components = juRealloc(gECS.components, (gECS.componentSizes[component] + 1) * (gECS.componentListSizes[component] + JU_LIST_EXTENSION));
-		*((void**)&gECS.previousComponents) = juRealloc((void*)gECS.previousComponents, (gECS.componentSizes[component] + 1) * (gECS.componentListSizes[component] + JU_LIST_EXTENSION));
+		gECS.previousComponents = juRealloc(gECS.previousComponents, (gECS.componentSizes[component] + 1) * (gECS.componentListSizes[component] + JU_LIST_EXTENSION));
 		id = gECS.componentListSizes[component];
 
 		// Set all the other components to inactive
@@ -472,7 +477,7 @@ static void juECSJobCopy(void *ptr) {
 
 	// Copy all components
 	for (int i = 0; i < gECS.componentCount; i++)
-		memcpy((void*)gECS.previousComponents[i], gECS.components[i], (gECS.componentSizes[i] + 1) * gECS.componentListSizes[i]);
+		memcpy(gECS.previousComponents[i], gECS.components[i], (gECS.componentSizes[i] + 1) * gECS.componentListSizes[i]);
 }
 
 void juECSAddComponents(const size_t *componentSizes, int componentCount) {
@@ -481,7 +486,7 @@ void juECSAddComponents(const size_t *componentSizes, int componentCount) {
 
 	// Create lists for components
 	gECS.components = juMallocZero(componentCount * sizeof(JUComponentVector));
-	*((void**)&gECS.previousComponents) = juMallocZero(componentCount * sizeof(JUComponentVector));
+	gECS.previousComponents = juMallocZero(componentCount * sizeof(JUComponentVector));
 	gECS.componentListSizes = juMallocZero(componentCount * sizeof(int));
 }
 
@@ -509,7 +514,10 @@ JUEntityID juECSAddEntity(JUEntitySpec *spec) {
 			gECS.entities[i].exists = false;
 			gECS.entities[i].queueDeletion = false;
 			gECS.entities[i].type = 0;
-			gECS.entities[i].components = juMallocZero(sizeof(JUComponentID) * gECS.componentCount);
+			gECS.entities[i].components = juMalloc(sizeof(JUComponentID) * gECS.componentCount);
+
+			for (int j = 0; j < gECS.componentCount; j++)
+				gECS.entities[i].components[j] = JU_NO_COMPONENT;
 		}
 		gECS.entityCount += JU_LIST_EXTENSION;
 	}
@@ -528,10 +536,8 @@ void *juECSGetComponent(JUComponent component, JUEntity *entity) {
 	return juECSGetComponentFromID(component, entity->components[component]);
 }
 
-const void *juECSGetPreviousComponent(JUComponent component, JUComponentID id) {
-	if (id != JU_NO_COMPONENT)
-		return (((uint8_t*)(&gECS.previousComponents[component])) + ((gECS.componentSizes[component]) + 1) * id);
-	return NULL;
+const void *juECSGetPreviousComponent(JUComponent component, JUEntity *entity) {
+	return juECSGetComponentFromID(component, entity->components[component]);
 }
 
 void juECSRunSystems() {

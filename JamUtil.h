@@ -134,8 +134,9 @@ JUEntityID juECSAddEntity(JUEntitySpec *spec);
 /// \brief Grabs a component given a component type and id
 void *juECSGetComponent(JUComponent component, JUEntity *entity);
 
+
 /// \brief Grabs a component from the read-only previous frame components given a component type and id
-const void *juECSGetPreviousComponent(JUComponent component, JUComponentID id);
+const void *juECSGetPreviousComponent(JUComponent component, JUEntity *entity);
 
 /// \brief Runs all systems
 void juECSRunSystems();

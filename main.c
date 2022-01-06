@@ -22,6 +22,7 @@ vec4 COLLISION_COLOUR = {1, 0, 0, 1};
 
 /***************************** ECS stuff *****************************/
 
+// All of the components are just structs
 typedef struct CompKinematics {
 	vec2 velocity;
 	vec2 acceleration;
@@ -36,12 +37,14 @@ typedef struct CompVisible {
 	float radius;
 } CompVisible;
 
+// The ECS only needs to know how large the structs are
 size_t COMPONENT_SIZES[] = {
 		sizeof(struct CompKinematics),
 		sizeof(struct CompPosition),
 		sizeof(struct CompVisible),
 };
 
+// For ease of use everywhere, make an enum that corresponds to the size list above
 typedef enum {
 	COMPONENT_KINEMATICS = 0,
 	COMPONENT_POSITION = 1,
@@ -50,12 +53,22 @@ typedef enum {
 } Components;
 
 void systemDraw(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
-
+	// Get the necessary components
+	const CompPosition *prevPos = juECSGetPreviousComponent(COMPONENT_POSITION, entity);
+	CompPosition *pos = juECSGetComponent(COMPONENT_POSITION, entity);
+	const CompVisible *prevVisible = juECSGetPreviousComponent(COMPONENT_VISIBLE, entity);
+	CompVisible *visible = juECSGetComponent(COMPONENT_VISIBLE, entity);
 }
 
 void systemPhysics(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
-
+	// Get the necessary components
+	const CompPosition *prevPos = juECSGetPreviousComponent(COMPONENT_POSITION, entity);
+	CompPosition *pos = juECSGetComponent(COMPONENT_POSITION, entity);
+	const CompVisible *prevKinematics = juECSGetPreviousComponent(COMPONENT_KINEMATICS, entity);
+	CompVisible *kinematics = juECSGetComponent(COMPONENT_KINEMATICS, entity);
 }
+
+// Tell the ECS about the systems
 JUComponent DRAW_COMPONENTS[] = {COMPONENT_POSITION, COMPONENT_VISIBLE};
 JUComponent PHYSICS_COMPONENTS[] = {COMPONENT_POSITION, COMPONENT_KINEMATICS};
 JUSystem SYSTEMS[] = {
@@ -105,8 +118,8 @@ int main() {
 		vk2dRendererStartFrame(clearColour);
 
 		// ECS
-		juECSRunSystems();
-		juECSCopyState();
+		//juECSRunSystems();
+		//juECSCopyState();
 
 		vk2dRendererEndFrame();
 	}
