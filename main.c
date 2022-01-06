@@ -55,9 +55,8 @@ typedef enum {
 void systemDraw(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
 	// Get the necessary components
 	const CompPosition *prevPos = juECSGetPreviousComponent(COMPONENT_POSITION, entity);
-	CompPosition *pos = juECSGetComponent(COMPONENT_POSITION, entity);
 	const CompVisible *prevVisible = juECSGetPreviousComponent(COMPONENT_VISIBLE, entity);
-	CompVisible *visible = juECSGetComponent(COMPONENT_VISIBLE, entity);
+
 }
 
 void systemPhysics(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
@@ -76,6 +75,11 @@ JUSystem SYSTEMS[] = {
 		{PHYSICS_COMPONENTS, 2, systemPhysics},
 };
 const int SYSTEM_COUNT = 2;
+
+const JUComponent ENT_COMPS_GRAPHIC[] = {COMPONENT_POSITION, COMPONENT_VISIBLE};
+const int ENT_COMPS_GRAPHIC_SIZE = 2;
+const JUComponent ENT_COMP_NPC[] = {COMPONENT_POSITION, COMPONENT_KINEMATICS, COMPONENT_VISIBLE};
+const int ENT_COMP_NPC_SIZE = 3;
 
 /***************************** Main *****************************/
 
@@ -107,6 +111,12 @@ int main() {
 	juECSAddComponents(COMPONENT_SIZES, COMPONENT_COUNT);
 	juECSAddSystems(SYSTEMS, SYSTEM_COUNT);
 
+	// Add simple drawn thing
+	CompVisible visible = {4};
+	CompPosition pos = {30, 30};
+	JUComponentVector comps[] = {&pos, &visible};
+	juECSAddEntity(ENT_COMPS_GRAPHIC, comps, ENT_COMPS_GRAPHIC_SIZE);
+
 	while (!stopRunning) {
 		juUpdate();
 		while (SDL_PollEvent(&e)) {
@@ -119,7 +129,7 @@ int main() {
 
 		// ECS
 		juECSRunSystems();
-		//juECSCopyState();
+		juECSCopyState();
 
 		vk2dRendererEndFrame();
 	}

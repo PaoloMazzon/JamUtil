@@ -495,7 +495,7 @@ void juECSAddSystems(const JUSystem *systems, int systemCount) {
 	gECS.systemCount = systemCount;
 }
 
-JUEntityID juECSAddEntity(JUEntitySpec *spec) {
+JUEntityID juECSAddEntity(const JUComponent *components, JUComponentVector *defaultStates, int componentCount) {
 	JUEntityID entity = JU_INVALID_ENTITY;
 	pthread_mutex_lock(&gECS.createEntityAccess);
 
@@ -523,9 +523,16 @@ JUEntityID juECSAddEntity(JUEntitySpec *spec) {
 	}
 
 	// We have an entity, get it some components and create the type
-	for (int i = 0; i < spec->componentCount; i++) {
-		gECS.entities[entity].components[spec->components[i]] = juECSGetNewComponent(spec->components[i]);
-		gECS.entities[entity].type = gECS.entities[entity].type | (1 << spec->components[i]);
+	for (int i = 0; i < componentCount; i++) {
+		gECS.entities[entity].components[components[i]] = juECSGetNewComponent(components[i]);
+		gECS.entities[entity].type = gECS.entities[entity].type | (1 << components[i]);
+
+		// Copy the new state
+		if (defaultStates != NULL) {
+			int id = gECS.entities[entity].components[components[i]];
+			memcpy(juECSGetComponentFromID(components[i], id), defaultStates[i], gECS.componentSizes[components[i]]);
+			memcpy(juECSGetPreviousComponentFromID(components[i], id), defaultStates[i], gECS.componentSizes[components[i]]);
+		}
 	}
 
 	pthread_mutex_unlock(&gECS.createEntityAccess);
