@@ -121,6 +121,9 @@ void juECSAddComponents(const size_t *componentSizes, int componentCount);
 /// \brief Adds all systems to the ECS (only call once)
 /// \param systems Array of systems (must persist throughout program, use constants)
 /// \param systemCount Number of systems
+///
+/// System functions should be of the form
+/// `void system(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents);`
 void juECSAddSystems(const JUSystem *systems, int systemCount);
 
 /// \brief Adds an entity to the system
@@ -129,7 +132,7 @@ void juECSAddSystems(const JUSystem *systems, int systemCount);
 JUEntityID juECSAddEntity(JUEntitySpec *spec);
 
 /// \brief Grabs a component given a component type and id
-void *juECSGetComponent(JUComponent component, JUComponentID id);
+void *juECSGetComponent(JUComponent component, JUEntity *entity);
 
 /// \brief Grabs a component from the read-only previous frame components given a component type and id
 const void *juECSGetPreviousComponent(JUComponent component, JUComponentID id);

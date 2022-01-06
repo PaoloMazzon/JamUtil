@@ -398,6 +398,13 @@ static void juECSSetComponentState(JUComponent component, JUComponentID id, bool
 static bool juECSGetComponentState(JUComponent component, JUComponentID id) {
 	if (id != JU_NO_COMPONENT)
 		return *((((uint8_t*)(&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id) + gECS.componentSizes[component]);
+	return false;
+}
+
+static void *juECSGetComponentFromID(JUComponent component, JUComponentID id) {
+	if (id != JU_NO_COMPONENT)
+		return (((uint8_t*)(&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id);
+	return NULL;
 }
 
 // Creates a new components or grabs a stagnant one
@@ -424,7 +431,7 @@ static JUComponentID juECSGetNewComponent(JUComponent component) {
 	}
 
 	// Zero the component and make it active
-	memset(juECSGetComponent(component, id), 0, gECS.componentSizes[component]);
+	memset(juECSGetComponentFromID(component, id), 0, gECS.componentSizes[component]);
 	memset((void*)juECSGetPreviousComponent(component, id), 0, gECS.componentSizes[component]);
 	juECSSetComponentState(component, id, true);
 
@@ -507,22 +514,24 @@ JUEntityID juECSAddEntity(JUEntitySpec *spec) {
 		gECS.entityCount += JU_LIST_EXTENSION;
 	}
 
-	// We have an entity, get it some components
-	for (int i = 0; i < spec->componentCount; i++)
+	// We have an entity, get it some components and create the type
+	for (int i = 0; i < spec->componentCount; i++) {
 		gECS.entities[entity].components[spec->components[i]] = juECSGetNewComponent(spec->components[i]);
+		gECS.entities[entity].type = gECS.entities[entity].type | (1 << spec->components[i]);
+	}
 
 	pthread_mutex_unlock(&gECS.createEntityAccess);
 	return entity;
 }
 
-void *juECSGetComponent(JUComponent component, JUComponentID id) {
-	if (id != JU_NO_COMPONENT)
-		return (((uint8_t*)(&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id);
+void *juECSGetComponent(JUComponent component, JUEntity *entity) {
+	return juECSGetComponentFromID(component, entity->components[component]);
 }
 
 const void *juECSGetPreviousComponent(JUComponent component, JUComponentID id) {
 	if (id != JU_NO_COMPONENT)
 		return (((uint8_t*)(&gECS.previousComponents[component])) + ((gECS.componentSizes[component]) + 1) * id);
+	return NULL;
 }
 
 void juECSRunSystems() {
@@ -764,7 +773,7 @@ void juJobQueue(JUJob job) {
 	gJobSystem.channels[job.channel] += 1;
 
 	// Wait for the queue and queue it
-	pthread_mutex_lock(gJobSystem.queueAccess);
+	pthread_mutex_lock(&gJobSystem.queueAccess);
 
 	// Extend queue list
 	if (gJobSystem.queueListSize == gJobSystem.queueSize) {

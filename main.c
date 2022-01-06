@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "JamUtil.h"
 
+/***************************** Constants *****************************/
+
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 const int WINDOW_SCALE = 1;
@@ -18,11 +20,57 @@ const uint32_t FILE_COUNT = 5;
 vec4 DEFAULT_COLOUR = {1, 1, 1, 1};
 vec4 COLLISION_COLOUR = {1, 0, 0, 1};
 
+/***************************** ECS stuff *****************************/
+
+typedef struct CompKinematics {
+	vec2 velocity;
+	vec2 acceleration;
+	float friction;
+} CompKinematics;
+
+typedef struct CompPosition {
+	vec2 position;
+} CompPosition;
+
+typedef struct CompVisible {
+	float radius;
+} CompVisible;
+
+size_t COMPONENT_SIZES[] = {
+		sizeof(struct CompKinematics),
+		sizeof(struct CompPosition),
+		sizeof(struct CompVisible),
+};
+
+typedef enum {
+	COMPONENT_KINEMATICS = 0,
+	COMPONENT_POSITION = 1,
+	COMPONENT_VISIBLE = 2,
+	COMPONENT_COUNT = 3,
+} Components;
+
+void systemDraw(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
+
+}
+
+void systemPhysics(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
+
+}
+JUComponent DRAW_COMPONENTS[] = {COMPONENT_POSITION, COMPONENT_VISIBLE};
+JUComponent PHYSICS_COMPONENTS[] = {COMPONENT_POSITION, COMPONENT_KINEMATICS};
+JUSystem SYSTEMS[] = {
+		{DRAW_COMPONENTS, 2, systemDraw},
+		{PHYSICS_COMPONENTS, 2, systemPhysics},
+};
+const int SYSTEM_COUNT = 2;
+
+/***************************** Main *****************************/
+
 int main() {
 	SDL_Window *window = SDL_CreateWindow("VK2D", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH * WINDOW_SCALE, WINDOW_HEIGHT * WINDOW_SCALE, SDL_WINDOW_VULKAN);
 	SDL_Event e;
 	VK2DRendererConfig config = {msaa_32x, sm_TripleBuffer, ft_Nearest};
-	juInit(window, 0);
+	juInit(window, 10);
 	vk2dRendererInit(window, config);
 	vec4 clearColour = {0.0, 0.0, 0.0, 1.0}; // Black
 	bool stopRunning = false;
@@ -42,6 +90,10 @@ int main() {
 	JURectangle movingRectangle = {100, 100, 100, 100};
 	double movingAngle = VK2D_PI / 6;
 
+	// ECS
+	juECSAddComponents(COMPONENT_SIZES, COMPONENT_COUNT);
+	juECSAddSystems(SYSTEMS, SYSTEM_COUNT);
+
 	while (!stopRunning) {
 		juUpdate();
 		while (SDL_PollEvent(&e)) {
@@ -52,21 +104,9 @@ int main() {
 
 		vk2dRendererStartFrame(clearColour);
 
-		// Draw your things
-		int mx, my;
-		SDL_GetMouseState(&mx, &my);
-		mx /= WINDOW_SCALE;
-		my /= WINDOW_SCALE;
-		movingRectangle.x = mx;
-		movingRectangle.y = my;
-		juSpriteDraw(juLoaderGetSprite(loader, "assets/sheet.png"), 400, 500);
-		vk2dDrawTextureExt(juLoaderGetTexture(loader, "assets/image1.png"), 400, 300, 5, 5, 0, 0, 0);
-		if (juRotatedRectangleCollision(&rectangle, angle, ox, oy, &movingRectangle, movingAngle, ox, oy))
-			vk2dRendererSetColourMod(COLLISION_COLOUR);
-		vk2dRendererDrawRectangle(rectangle.x, rectangle.y, rectangle.w, rectangle.h, angle, ox, oy);
-		//vk2dRendererDrawRectangle(movingRectangle.x, movingRectangle.y, movingRectangle.w, movingRectangle.h, movingAngle, ox, oy);
-		vk2dRendererSetColourMod(VK2D_DEFAULT_COLOUR_MOD);
-		juFontDrawWrapped(juLoaderGetFont(loader, "assets/comic.jufnt"), 0, 0, 800, "The quick brown fox jumps over the lazy dog.");
+		// ECS
+		juECSRunSystems();
+		juECSCopyState();
 
 		vk2dRendererEndFrame();
 	}
