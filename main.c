@@ -118,7 +118,7 @@ int main() {
 		vk2dRendererStartFrame(clearColour);
 
 		// ECS
-		//juECSRunSystems();
+		juECSRunSystems();
 		//juECSCopyState();
 
 		vk2dRendererEndFrame();

@@ -263,9 +263,9 @@ static void *juWorkerThread(void *data) {
 		if (gJobSystem.queueSize > 0) {
 			job = gJobSystem.queue[0];
 			haveJob = true;
-			gJobSystem.queueSize--;
-			for (int i = 0; i < gJobSystem.queueSize; i++)
+			for (int i = 0; i < gJobSystem.queueSize - 1; i++)
 				gJobSystem.queue[i] = gJobSystem.queue[i + 1];
+			gJobSystem.queueSize--;
 		}
 		pthread_mutex_unlock(&gJobSystem.queueAccess);
 
@@ -783,7 +783,7 @@ void juJobQueue(JUJob job) {
 
 	// Extend queue list
 	if (gJobSystem.queueListSize == gJobSystem.queueSize) {
-		gJobSystem.queue = juRealloc(gJobSystem.queue, gJobSystem.queueListSize + JU_LIST_EXTENSION);
+		gJobSystem.queue = juRealloc(gJobSystem.queue, (gJobSystem.queueListSize + JU_LIST_EXTENSION) * sizeof(JUJob *));
 		gJobSystem.queueListSize += JU_LIST_EXTENSION;
 	}
 	gJobSystem.queue[gJobSystem.queueSize] = job;
