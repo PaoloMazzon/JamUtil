@@ -56,7 +56,7 @@ void systemDraw(JUEntity *entity, const JUComponentVector* const readComponents,
 	// Get the necessary components
 	const CompPosition *prevPos = juECSGetPreviousComponent(COMPONENT_POSITION, entity);
 	const CompVisible *prevVisible = juECSGetPreviousComponent(COMPONENT_VISIBLE, entity);
-
+	vk2dDrawCircle(prevPos->position[0], prevPos->position[1], prevVisible->radius);
 }
 
 void systemPhysics(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
@@ -87,7 +87,7 @@ int main() {
 	SDL_Window *window = SDL_CreateWindow("VK2D", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH * WINDOW_SCALE, WINDOW_HEIGHT * WINDOW_SCALE, SDL_WINDOW_VULKAN);
 	SDL_Event e;
 	VK2DRendererConfig config = {msaa_32x, sm_TripleBuffer, ft_Nearest};
-	juInit(window, 10);
+	juInit(window, 10, 3);
 	vk2dRendererInit(window, config);
 	vec4 clearColour = {0.0, 0.0, 0.0, 1.0}; // Black
 	bool stopRunning = false;

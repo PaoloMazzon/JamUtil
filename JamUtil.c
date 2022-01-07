@@ -21,6 +21,7 @@ const JUEntityID JU_INVALID_ENTITY = -1;
 const JUComponentID JU_NO_COMPONENT = -1;
 const int JU_JOB_CHANNEL_SYSTEMS = 0;
 const int JU_JOB_CHANNEL_COPY = 1;
+const int32_t JU_DISABLED_LOCK = -1;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 uint32_t RMASK = 0xff000000;
@@ -281,7 +282,7 @@ static void *juWorkerThread(void *data) {
 
 /********************** Top-Level **********************/
 
-void juInit(SDL_Window *window, int jobChannels) {
+void juInit(SDL_Window *window, int jobChannels, int minimumThreads) {
 	// Sound
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version)
@@ -301,7 +302,10 @@ void juInit(SDL_Window *window, int jobChannels) {
 	// Setup job system if any channels were specified
 	if (jobChannels > 0) {
 		gJobSystem.channelCount = jobChannels;
-		gJobSystem.threadCount = SDL_GetCPUCount() - 1;
+		if (minimumThreads == 0)
+			gJobSystem.threadCount = SDL_GetCPUCount() - 1;
+		else
+			gJobSystem.threadCount = SDL_GetCPUCount() - 1 < minimumThreads ? minimumThreads : SDL_GetCPUCount() - 1;
 		gJobSystem.channels = juMallocZero(jobChannels * sizeof(_Atomic int));
 		gJobSystem.threads = juMalloc(gJobSystem.threadCount * sizeof(pthread_t));
 
@@ -525,6 +529,7 @@ JUEntityID juECSAddEntity(const JUComponent *components, JUComponentVector *defa
 	for (int i = 0; i < componentCount; i++) {
 		gECS.entities[entity].components[components[i]] = juECSGetNewComponent(components[i]);
 		gECS.entities[entity].type = gECS.entities[entity].type | (1 << components[i]);
+		gECS.entities[entity].exists = true;
 
 		// Copy the new state
 		if (defaultStates != NULL) {
@@ -562,6 +567,30 @@ void juECSCopyState() {
 	juJobWaitChannel(JU_JOB_CHANNEL_SYSTEMS);
 	JUJob job = {JU_JOB_CHANNEL_COPY, juECSJobCopy, NULL};
 	juJobQueue(job);
+}
+
+void juECSLockNext(JUECSLock *lock) {
+	if (*lock != JU_DISABLED_LOCK) {
+		*lock += 1;
+	}
+}
+
+void juECSLockWait(JUECSLock *lock, int index) {
+	if (*lock != JU_DISABLED_LOCK) {
+		bool done = false;
+		while (!done)
+			done = *lock == index;
+	}
+}
+
+void juECSLockReset(JUECSLock *lock) {
+	if (*lock != JU_DISABLED_LOCK) {
+		*lock = 0;
+	}
+}
+
+void juECSLockDisable(JUECSLock *lock) {
+	*lock = JU_DISABLED_LOCK;
 }
 
 /********************** Font **********************/
