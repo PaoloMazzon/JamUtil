@@ -22,6 +22,7 @@ const JUComponentID JU_NO_COMPONENT = -1;
 const int JU_JOB_CHANNEL_SYSTEMS = 0;
 const int JU_JOB_CHANNEL_COPY = 1;
 const int32_t JU_DISABLED_LOCK = -1;
+const JUEntityType JU_INVALID_TYPE = 0;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 uint32_t RMASK = 0xff000000;
@@ -66,16 +67,18 @@ typedef struct JUJobSystem {
 
 /// \brief Information for ECS
 typedef struct JUECS {
-	JUEntity *entities;                                ///< Vector of all entities
-	int entityCount;                                   ///< Number of entities
-	const JUSystem *systems;                           ///< List of all systems
-	int systemCount;                                   ///< Amount of systems
-	JUComponentVector* previousComponents;             ///< Previous frame's components
-	JUComponentVector *components;                     ///< This frame's components
-	const int componentCount;                          ///< Amount of components
-	const size_t *componentSizes;                      ///< Size of each component in bytes
-	int *componentListSizes;                           ///< Actual size of component list
-	pthread_mutex_t createEntityAccess;                ///< Lock so only 1 entity may be created at a time
+	JUEntity *entities;                    ///< Vector of all entities
+	int entityCount;                       ///< Number of entities
+	JUSystem *systems;               ///< List of all systems
+	int systemCount;                       ///< Amount of systems
+	_Atomic bool *systemFinished;          ///< Whether or not each system is done executing this frame
+	JUComponentVector* previousComponents; ///< Previous frame's components
+	JUComponentVector *components;         ///< This frame's components
+	const int componentCount;              ///< Amount of components
+	const size_t *componentSizes;          ///< Size of each component in bytes
+	int *componentListSizes;               ///< Actual size of component list
+	pthread_mutex_t createEntityAccess;    ///< Lock so only 1 entity may be created at a time
+	int entityIterator;                    ///< Basically the i value for the entity iterating functions
 } JUECS;
 
 /********************** Globals **********************/
@@ -354,6 +357,7 @@ void juQuit() {
 		juFree(gECS.entities);
 		juFree(gECS.previousComponents);
 		juFree(gECS.components);
+		juFree(gECS.systemFinished);
 
 		// Destroy job system
 		gJobSystem.kill = true;
@@ -461,9 +465,10 @@ static void juECSJobSystem(void *ptr) {
 
 			// Run the system on this entity
 			if (fulfillsReqs)
-				system->system(&gECS.entities[i], gECS.previousComponents, gECS.components);
+				system->system(i);
 		}
 	}
+	gECS.systemFinished[system->id] = true;
 }
 
 // Job for copying over components
@@ -493,14 +498,29 @@ void juECSAddComponents(const size_t *componentSizes, int componentCount) {
 	gECS.componentListSizes = juMallocZero(componentCount * sizeof(int));
 }
 
-void juECSAddSystems(const JUSystem *systems, int systemCount) {
+void juECSAddSystems(JUSystem *systems, int systemCount) {
 	gECS.systems = systems;
 	gECS.systemCount = systemCount;
+	gECS.systemFinished = juMallocZero(sizeof(_Atomic bool) * systemCount);
+
+	for (int i = 0; i < gECS.systemCount; i++)
+		gECS.systems[i].id = i;
+}
+
+bool juECSIsSystemFinished(int systemIndex) {
+	return gECS.systemFinished[systemIndex];
+}
+
+void juECSWaitSystemFinished(int systemIndex) {
+	bool finished = false;
+	while (!finished)
+		finished = juECSIsSystemFinished(systemIndex);
 }
 
 JUEntityID juECSAddEntity(const JUComponent *components, JUComponentVector *defaultStates, int componentCount) {
 	JUEntityID entity = JU_INVALID_ENTITY;
 	pthread_mutex_lock(&gECS.createEntityAccess);
+	juJobWaitChannel(JU_JOB_CHANNEL_COPY);
 
 	// Find an available spot in the list
 	for (int i = 0; i < gECS.entityCount && entity == JU_INVALID_ENTITY; i++)
@@ -543,12 +563,16 @@ JUEntityID juECSAddEntity(const JUComponent *components, JUComponentVector *defa
 	return entity;
 }
 
-void *juECSGetComponent(JUComponent component, JUEntity *entity) {
-	return juECSGetComponentFromID(component, entity->components[component]);
+void *juECSGetComponent(JUComponent component, JUEntityID entity) {
+	if (entity != JU_INVALID_ENTITY && entity < gECS.entityCount)
+		return juECSGetComponentFromID(component, gECS.entities[entity].components[component]);
+	return NULL;
 }
 
-const void *juECSGetPreviousComponent(JUComponent component, JUEntity *entity) {
-	return juECSGetComponentFromID(component, entity->components[component]);
+const void *juECSGetPreviousComponent(JUComponent component, JUEntityID entity) {
+	if (entity != JU_INVALID_ENTITY && entity < gECS.entityCount)
+		return juECSGetComponentFromID(component, gECS.entities[entity].components[component]);
+	return NULL;
 }
 
 void juECSRunSystems() {
@@ -557,6 +581,7 @@ void juECSRunSystems() {
 
 	// Run all systems as jobs
 	for (int i = 0; i < gECS.systemCount; i++) {
+		gECS.systemFinished[i] = false;
 		JUJob job = {JU_JOB_CHANNEL_SYSTEMS, juECSJobSystem, (void*)&gECS.systems[i]};
 		juJobQueue(job);
 	}
@@ -591,6 +616,40 @@ void juECSLockReset(JUECSLock *lock) {
 
 void juECSLockDisable(JUECSLock *lock) {
 	*lock = JU_DISABLED_LOCK;
+}
+
+void juECSEntityIterStart() {
+	juJobWaitChannel(JU_JOB_CHANNEL_COPY);
+	pthread_mutex_lock(&gECS.createEntityAccess);
+	gECS.entityIterator = 0;
+}
+
+JUEntity *juECSEntityIterNext() {
+	JUEntity *out = NULL;
+
+	// Find the next entity that exists
+	while (out == NULL && gECS.entityIterator < gECS.entityCount) {
+		if (gECS.entities[gECS.entityIterator].exists)
+			out = &gECS.entities[gECS.entityIterator];
+		gECS.entityIterator += 1;
+	}
+
+	return out;
+}
+
+void juECSEntityIterEnd() {
+	pthread_mutex_unlock(&gECS.createEntityAccess);
+}
+
+JUEntityType juECSGetEntityType(JUEntityID entity) {
+	if (entity != JU_INVALID_ENTITY && entity < gECS.entityCount)
+		return gECS.entities[entity].type;
+	return JU_INVALID_TYPE;
+}
+
+void JUECSDestroyEntity(JUEntityID entity) {
+	if (entity != JU_INVALID_ENTITY && entity < gECS.entityCount)
+		gECS.entities[entity].queueDeletion = true;
 }
 
 /********************** Font **********************/

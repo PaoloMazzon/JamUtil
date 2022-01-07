@@ -201,7 +201,59 @@ a job on the same channel.
 
 Entity Component System (ECS)
 -----------------------------
-TODO: This
+Entity component system (ECS) is a way of organizing and processing entities in a game based around
+components and systems. It consists of three parts in this library:
+
+ + *Component* - A piece of data, effectively just a struct
+ + *System* - Function that is run over entities that have the specified component(s)
+ + *Entity* - Collection of components, exposed to the user as an integer ID (`JUEntityID`)
+
+To set up the ECS in your project you need to give the ECS two things: a list of all your systems and
+a list of the size of each component. The system does not care what the content of your component are
+but it needs to know their size. Each system is comprised of two things: a list of required components
+and a function pointer to a system function. That system function will be ran for each entity that has
+all the required components, passing that entity's ID to the function. See `main.c` for an example of it.
+
+Each system in the ECS is ran as a separate job, meaning they are likely all going to be run on their own
+threads. Because of this, there are two copies of every component in the ECS: the current frame and previous
+frame's components. The previous frame is read-only and as such every system may read from it without
+worrying about data races, but only one system may write to the current frame's components at a time. If
+multiple systems require current-frame write access for a component you may use `JUECSLock`s to synchronize
+the order of which the systems may access them.
+
+The following is a very simple example of running the ECS
+
+    while (running) {
+    	...
+    
+    	vk2dRendererStartFrame(colour);
+    
+    	juECSRunSystems();
+    	juECSCopyState();
+    
+    	vk2dRendererEndFrame();
+    }
+
+Both the `juECSRunSystems` and `juECSCopyState` functions do their actual work in jobs and very little happens
+in those functions. There is also some synchronization work going on there
+
+ + `juECSRunSystems` waits until the job(s) queued by `juECSCopyState` before queueing its own jobs, but this
+ usually is a non-issue because `juECSCopyState` will be running in another thread while VK2D is finishing processing
+ the frame and starting the next frame
+ + `juECSCopyState` waits until `juECSRunSystems` is done running, so if you have any processing work to do outside
+ of the ECS, between `juECSRunSystems` and `juECSCopyState` is a good place to do it.
+ 
+And finally some more general synchronization notes for ECS:
+
+ + Adding entities to the ECS and searching through entities (`juECSAddEntity` and `juECSEntityIter*` functions)
+ will wait until `juECSCopyState` job(s) are finished and only one of those functions may be used at a time. So if
+ multiple systems are all trying to access one of the aforementioned functions they will have to wait until said
+ functions are no longer being used in another thread
+ + Systems are guaranteed to be run on the same thread. Given a system `s`, that system will be entirely processed
+ by one thread and the function associated with `s` will never be running on multiple threads at the same time
+ + VK2D is not thread safe and you must synchronize access to VK2D functions yourself - but because of the previous
+ point if you only have one system that calls VK2D you need only synchronize VK2D calls between that system and 
+ the main thread (see `juECSWaitSystemFinished`)
 
 Example CMake
 =============

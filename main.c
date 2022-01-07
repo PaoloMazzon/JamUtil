@@ -52,14 +52,14 @@ typedef enum {
 	COMPONENT_COUNT = 3,
 } Components;
 
-void systemDraw(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
+void systemDraw(JUEntityID entity) {
 	// Get the necessary components
 	const CompPosition *prevPos = juECSGetPreviousComponent(COMPONENT_POSITION, entity);
 	const CompVisible *prevVisible = juECSGetPreviousComponent(COMPONENT_VISIBLE, entity);
 	vk2dDrawCircle(prevPos->position[0], prevPos->position[1], prevVisible->radius);
 }
 
-void systemPhysics(JUEntity *entity, const JUComponentVector* const readComponents, JUComponentVector* writeComponents) {
+void systemPhysics(JUEntityID entity) {
 	// Get the necessary components
 	const CompPosition *prevPos = juECSGetPreviousComponent(COMPONENT_POSITION, entity);
 	CompPosition *pos = juECSGetComponent(COMPONENT_POSITION, entity);
