@@ -386,9 +386,9 @@ double juTime() {
 // Sets a component state
 static void juECSSetComponentState(JUComponent component, JUComponentID id, bool val) {
 	if (id != JU_NO_COMPONENT) {
-		*((((uint8_t *) (&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id) +
+		*((((uint8_t *) (gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id) +
 		  gECS.componentSizes[component]) = val;
-		*((((uint8_t *) (&gECS.previousComponents[component])) + ((gECS.componentSizes[component]) + 1) * id) +
+		*((((uint8_t *) (gECS.previousComponents[component])) + ((gECS.componentSizes[component]) + 1) * id) +
 		  gECS.componentSizes[component]) = val;
 	}
 }
@@ -396,19 +396,19 @@ static void juECSSetComponentState(JUComponent component, JUComponentID id, bool
 // Gets a component state
 static bool juECSGetComponentState(JUComponent component, JUComponentID id) {
 	if (id != JU_NO_COMPONENT)
-		return *((((uint8_t*)(&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id) + gECS.componentSizes[component]);
+		return *((((uint8_t*)(gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id) + gECS.componentSizes[component]);
 	return false;
 }
 
 static void *juECSGetComponentFromID(JUComponent component, JUComponentID id) {
 	if (id != JU_NO_COMPONENT)
-		return (((uint8_t*)(&gECS.components[component])) + ((gECS.componentSizes[component]) + 1) * id);
+		return (((uint8_t*)gECS.components[component]) + ((gECS.componentSizes[component]) + 1) * id);
 	return NULL;
 }
 
 static void *juECSGetPreviousComponentFromID(JUComponent component, JUComponentID id) {
 	if (id != JU_NO_COMPONENT)
-		return (((uint8_t*)(&gECS.previousComponents[component])) + ((gECS.componentSizes[component]) + 1) * id);
+		return (((uint8_t*)(gECS.previousComponents[component])) + ((gECS.componentSizes[component]) + 1) * id);
 	return NULL;
 }
 
@@ -423,9 +423,8 @@ static JUComponentID juECSGetNewComponent(JUComponent component) {
 
 	// No available spot, make list bigger
 	if (id == JU_NO_COMPONENT) {
-		// Should probably fix this lmfao
-		gECS.components = juRealloc(gECS.components, (gECS.componentSizes[component] + 1) * (gECS.componentListSizes[component] + JU_LIST_EXTENSION));
-		gECS.previousComponents = juRealloc(gECS.previousComponents, (gECS.componentSizes[component] + 1) * (gECS.componentListSizes[component] + JU_LIST_EXTENSION));
+		gECS.components[component] = juRealloc(gECS.components[component], (gECS.componentSizes[component] + 1) * (gECS.componentListSizes[component] + JU_LIST_EXTENSION));
+		gECS.previousComponents[component] = juRealloc(gECS.previousComponents[component], (gECS.componentSizes[component] + 1) * (gECS.componentListSizes[component] + JU_LIST_EXTENSION));
 		id = gECS.componentListSizes[component];
 
 		// Set all the other components to inactive
@@ -436,9 +435,9 @@ static JUComponentID juECSGetNewComponent(JUComponent component) {
 	}
 
 	// Zero the component and make it active
-	memset(juECSGetComponentFromID(component, id), 0, gECS.componentSizes[component]);
-	memset((void*)juECSGetPreviousComponent(component, id), 0, gECS.componentSizes[component]);
-	juECSSetComponentState(component, id, true);
+	memset(juECSGetComponentFromID(component, id), 0, gECS.componentSizes[component]); // TODO: Zeroing wrong memory
+	memset(juECSGetPreviousComponentFromID(component, id), 0, gECS.componentSizes[component]);
+	juECSSetComponentState(component, id, true); // TODO: Hitting wrong memory
 
 	return id;
 }
