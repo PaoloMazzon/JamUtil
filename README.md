@@ -15,7 +15,8 @@ Features
  + Simplified keyboard controls
  + Basic collisions
  + Simple-to-use job system
- + Entity component system (ECS) (in progress)
+ + Entity component system (ECS)
+ + Basic clock
  
 Usage
 =====

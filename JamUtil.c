@@ -652,6 +652,47 @@ void JUECSDestroyEntity(JUEntityID entity) {
 		gECS.entities[entity].queueDeletion = true;
 }
 
+/********************** Clock **********************/
+
+void juClockReset(JUClock *clock) {
+	clock->totalTime = 0;
+	clock->totalIterations = 0;
+	clock->lastTime = 0;
+	juClockStart(clock);
+}
+
+void juClockStart(JUClock *clock) {
+	clock->lastTime = SDL_GetPerformanceCounter();
+}
+
+double juClockTime(JUClock *clock) {
+	return ((double)SDL_GetPerformanceCounter() - (double)clock->lastTime) / (double)SDL_GetPerformanceFrequency();
+}
+
+double juClockTick(JUClock *clock) {
+	double time = juClockTime(clock);
+	clock->totalTime += time;
+	clock->totalIterations++;
+	juClockStart(clock);
+	return time;
+}
+
+void juClockFramerate(JUClock *clock, double framerate) {
+	double time = juClockTime(clock);
+	clock->totalTime += time;
+	clock->totalIterations++;
+
+	bool done = false;
+	while (!done)
+		done = juClockTime(clock) >= 1.0 / framerate;
+
+	juClockStart(clock);
+}
+
+double juClockGetAverage(JUClock *clock) {
+	return clock->totalTime / clock->totalIterations;
+}
+
 /********************** Font **********************/
 
 JUFont juFontLoad(const char *filename) {
