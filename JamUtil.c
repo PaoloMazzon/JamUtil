@@ -680,6 +680,17 @@ void juECSDestroyAll() {
 		juECSDestroyEntity(i);
 }
 
+bool juECSEntityHasComponents(JUEntityID entity, JUComponent *components, int componentCount) {
+	if (juECSEntityExists(entity)) {
+		bool out = true;
+		for (int i = 0; i < componentCount; i++)
+			if (gECS.entities[entity].components[components[i]] == JU_NO_COMPONENT)
+				out = false;
+		return out;
+	}
+	return false;
+}
+
 /********************** Clock **********************/
 
 void juClockReset(JUClock *clock) {

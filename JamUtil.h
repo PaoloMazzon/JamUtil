@@ -204,6 +204,9 @@ void juECSDestroyEntity(JUEntityID entity);
 /// \brief Deletes all entities
 void juECSDestroyAll();
 
+/// \brief Returns true if the entity has at least those components
+bool juECSEntityHasComponents(JUEntityID entity, JUComponent *components, int componentCount);
+
 /********************** Clock **********************/
 
 /// \brief Data needed to calculate timing things
