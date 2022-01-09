@@ -503,6 +503,9 @@ double juSign(double x);
 /// \brief Subtracts y from x towards 0 and returns it, so if x is negative y will be added to it, if it would flip signs 0 is returned (y should be positive)
 double juSubToZero(double x, double y);
 
+/// \brief If x is between min and max, x is returned, if x is above max, max is returned and vice versa
+double juClamp(double x, double min, double max);
+
 /********************** Keyboard **********************/
 
 /// \brief Checks if a key is currently pressed

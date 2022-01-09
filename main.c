@@ -7,6 +7,9 @@
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 const int WINDOW_SCALE = 1;
+const float MAX_VELOCITY = 100;
+const float ACCELERATION = 25;
+const float FRICTION = 30;
 
 JULoadedAsset FILES[] = {
 	{"assets/image1.png"},
@@ -92,6 +95,14 @@ void systemPhysics(JUEntityID entity) {
 	CompHitbox *hitbox = juECSGetComponent(COMPONENT_HITBOX, entity);
 	juECSLockWait(&kinematics->inputLock, 1);
 
+	kinematics->velocity[0] += kinematics->acceleration[0] * juDelta();
+	kinematics->velocity[1] += kinematics->acceleration[1] * juDelta();
+	if (kinematics->acceleration[0] == 0)
+		kinematics->velocity[0] = juSubToZero(kinematics->velocity[0], FRICTION * juDelta());
+	if (kinematics->acceleration[1] == 0)
+		kinematics->velocity[1] = juSubToZero(kinematics->velocity[1], FRICTION * juDelta());
+	kinematics->velocity[0] = juClamp(kinematics->velocity[0], -MAX_VELOCITY, MAX_VELOCITY);
+	kinematics->velocity[1] = juClamp(kinematics->velocity[1], -MAX_VELOCITY, MAX_VELOCITY);
 	pos->position[0] += kinematics->velocity[0];
 	pos->position[1] += kinematics->velocity[1];
 
@@ -106,8 +117,8 @@ void systemPlayerInput(JUEntityID entity) {
 	CompKinematics *kinematics = juECSGetComponent(COMPONENT_KINEMATICS, entity);
 	juECSLockWait(&kinematics->inputLock, 0);
 
-	kinematics->velocity[0] = (-juKeyboardGetKey(SDL_SCANCODE_A) + juKeyboardGetKey(SDL_SCANCODE_D)) * 180 * juDelta();
-	kinematics->velocity[1] = (-juKeyboardGetKey(SDL_SCANCODE_W) + juKeyboardGetKey(SDL_SCANCODE_S)) * 180 * juDelta();
+	kinematics->acceleration[0] = (-juKeyboardGetKey(SDL_SCANCODE_A) + juKeyboardGetKey(SDL_SCANCODE_D)) * ACCELERATION;
+	kinematics->acceleration[1] = (-juKeyboardGetKey(SDL_SCANCODE_W) + juKeyboardGetKey(SDL_SCANCODE_S)) * ACCELERATION;
 
 	juECSLockNext(&kinematics->inputLock);
 }

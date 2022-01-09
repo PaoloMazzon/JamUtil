@@ -1278,6 +1278,10 @@ double juSubToZero(double x, double y) {
 	return x;
 }
 
+double juClamp(double x, double min, double max) {
+	return x < min ? min : (x > max ? max : x);
+}
+
 /********************** File I/O **********************/
 
 JUSave juSaveLoad(const char *filename) {
