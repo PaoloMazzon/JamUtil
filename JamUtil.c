@@ -647,9 +647,37 @@ JUEntityType juECSGetEntityType(JUEntityID entity) {
 	return JU_INVALID_TYPE;
 }
 
-void JUECSDestroyEntity(JUEntityID entity) {
+bool juECSEntityExists(JUEntityID entity) {
+	return entity != JU_INVALID_ENTITY && entity < gECS.entityCount && gECS.entities[entity].exists;
+}
+
+bool juECSSameType(JUEntityID entity1, JUEntityID entity2) {
+	if (gECS.componentCount < 64 && juECSEntityExists(entity1) && juECSEntityExists(entity2)) {
+		return juECSGetEntityType(entity1) == juECSGetEntityType(entity2);
+	} else if (juECSEntityExists(entity1) && juECSEntityExists(entity2)) {
+		bool out = true;
+
+		for (int i = 0; i < gECS.componentCount; i++) {
+			if (!((gECS.entities[entity1].components[i] == JU_NO_COMPONENT &&
+				   gECS.entities[entity2].components[i] == JU_NO_COMPONENT) ||
+				  (gECS.entities[entity1].components[i] != JU_NO_COMPONENT &&
+				   gECS.entities[entity2].components[i] != JU_NO_COMPONENT)))
+				out = false;
+		}
+
+		return out;
+	}
+	return false;
+}
+
+void juECSDestroyEntity(JUEntityID entity) {
 	if (entity != JU_INVALID_ENTITY && entity < gECS.entityCount)
 		gECS.entities[entity].queueDeletion = true;
+}
+
+void juECSDestroyAll() {
+	for (int i = 0; i < gECS.entityCount; i++)
+		juECSDestroyEntity(i);
 }
 
 /********************** Clock **********************/

@@ -192,8 +192,17 @@ void juECSEntityIterEnd();
 /// \brief Gets an entity type (only works if less than 65 components in the ECS) - if the entity doesn't exist, it will return `JU_INVALID_TYPE`
 JUEntityType juECSGetEntityType(JUEntityID entity);
 
+/// \brief Returns true if a given entity is a valid id and is present in the game world
+bool juECSEntityExists(JUEntityID entity);
+
+/// \brief Returns true if both entities have the same type of components (also returns true if they are identical)
+bool juECSSameType(JUEntityID entity1, JUEntityID entity2);
+
 /// \brief Queues an entity for destruction, it still exists until the next time data is copied
-void JUECSDestroyEntity(JUEntityID entity);
+void juECSDestroyEntity(JUEntityID entity);
+
+/// \brief Deletes all entities
+void juECSDestroyAll();
 
 /********************** Clock **********************/
 
