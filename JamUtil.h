@@ -497,6 +497,12 @@ double juCastX(double length, double angle);
 /// \brief Casts a ray out at a given angle and returns the y component
 double juCastY(double length, double angle);
 
+/// \brief Returns the sign of a number (1 for positive, -1 for negative, 0 for 0)
+double juSign(double x);
+
+/// \brief Subtracts y from x towards 0 and returns it, so if x is negative y will be added to it, if it would flip signs 0 is returned (y should be positive)
+double juSubToZero(double x, double y);
+
 /********************** Keyboard **********************/
 
 /// \brief Checks if a key is currently pressed

@@ -1265,6 +1265,19 @@ double juCastY(double length, double angle) {
 	return length * sin(-angle);
 }
 
+double juSign(double x) {
+	return x < 0 ? -1 : (x > 0 ? 1 : 0);
+}
+
+double juSubToZero(double x, double y) {
+	if (x < 0) {
+		return x + y > 0 ? 0 : x + y;
+	} else if (x > 0) {
+		return x - y < 0 ? 0 : x - y;
+	}
+	return x;
+}
+
 /********************** File I/O **********************/
 
 JUSave juSaveLoad(const char *filename) {
