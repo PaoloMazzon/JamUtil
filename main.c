@@ -17,8 +17,9 @@ JULoadedAsset FILES[] = {
 	{"assets/test_sound.wav"},
 	{"GenFont.py"},
 	{"assets/sheet.png", 50, 50, 50, 50, 0.1, 9},
+	{"assets/ball.png"},
 };
-const uint32_t FILE_COUNT = 5;
+const uint32_t FILE_COUNT = 6;
 
 vec4 DEFAULT_COLOUR = {1, 1, 1, 1};
 vec4 COLLISION_COLOUR = {1, 0, 0, 1};
@@ -40,6 +41,7 @@ typedef struct CompPosition {
 
 typedef struct CompVisible {
 	VK2DTexture tex;
+	float scale;
 } CompVisible;
 
 typedef struct CompHitbox {
@@ -52,7 +54,7 @@ typedef struct CompPlayerInput {
 } CompPlayerInput;
 
 typedef struct CompNPCAI {
-	uint8_t garbage;
+	float direction;
 } CompNPCAI;
 
 // The ECS only needs to know how large the structs are
@@ -82,7 +84,7 @@ void systemDraw(JUEntityID entity) {
 	// Get the necessary components
 	const CompPosition *prevPos = juECSGetPreviousComponent(COMPONENT_POSITION, entity);
 	const CompVisible *prevVisible = juECSGetPreviousComponent(COMPONENT_VISIBLE, entity);
-	vk2dDrawTexture(prevVisible->tex, prevPos->position[0], prevPos->position[1]);
+	vk2dDrawTextureExt(prevVisible->tex, prevPos->position[0], prevPos->position[1], prevVisible->scale, prevVisible->scale, 0, 0, 0);
 }
 
 void systemPhysics(JUEntityID entity) {
@@ -129,9 +131,15 @@ void systemNPCAI(JUEntityID entity) {
 	CompNPCAI *npcAI = juECSGetComponent(COMPONENT_NPC_AI, entity);
 	const CompKinematics *prevKinematics = juECSGetPreviousComponent(COMPONENT_KINEMATICS, entity);
 	CompKinematics *kinematics = juECSGetComponent(COMPONENT_KINEMATICS, entity);
+	const CompPosition *prevPosition = juECSGetPreviousComponent(COMPONENT_POSITION, entity);
+	CompPosition *position = juECSGetComponent(COMPONENT_POSITION, entity);
 	juECSLockWait(&kinematics->inputLock, 0);
 
+	if (position->position[1] >= WINDOW_HEIGHT) {
+		kinematics->velocity[1] = -kinematics->velocity[1] * 0.8;
+	}
 
+	kinematics->acceleration[1] = 0.25;
 
 	juECSLockNext(&kinematics->inputLock);
 }
@@ -141,12 +149,12 @@ void systemNPCAI(JUEntityID entity) {
 JUComponent DRAW_COMPONENTS[] = {COMPONENT_POSITION, COMPONENT_VISIBLE};
 JUComponent PHYSICS_COMPONENTS[] = {COMPONENT_POSITION, COMPONENT_KINEMATICS, COMPONENT_HITBOX};
 JUComponent PLAYER_INPUT_COMPONENTS[] = {COMPONENT_KINEMATICS, COMPONENT_PLAYER_INPUT};
-JUComponent NPC_AI_COMPONENTS[] = {COMPONENT_KINEMATICS, COMPONENT_NPC_AI};
+JUComponent NPC_AI_COMPONENTS[] = {COMPONENT_KINEMATICS, COMPONENT_NPC_AI, COMPONENT_POSITION};
 JUSystem SYSTEMS[] = {
 		{DRAW_COMPONENTS, 2, systemDraw},
 		{PHYSICS_COMPONENTS, 3, systemPhysics},
 		{PLAYER_INPUT_COMPONENTS, 2, systemPlayerInput},
-		{NPC_AI_COMPONENTS, 2, systemNPCAI},
+		{NPC_AI_COMPONENTS, 3, systemNPCAI},
 };
 
 typedef enum {
@@ -193,12 +201,21 @@ int main() {
 
 	// Add player
 	CompPosition pos = {30, 30};
-	CompVisible visible = {juLoaderGetTexture(loader, "assets/image1.png")};
+	CompVisible visible = {juLoaderGetTexture(loader, "assets/image1.png"), 3};
 	CompPlayerInput playerInput = {};
 	CompHitbox hitbox = {10, 10};
 	CompKinematics kin = {};
 	JUComponentVector comps[] = {&pos, &visible, &playerInput, &hitbox, &kin};
 	juECSAddEntity(ENT_COMPS_PLAYER, comps, ENT_COMPS_PLAYER_SIZE);
+
+	// Add test NPC (ball that is bouncing)
+	CompPosition pos2 = {150, 100};
+	CompVisible visible2 = {juLoaderGetTexture(loader, "assets/ball.png"), 1};
+	CompNPCAI npc = {};
+	CompHitbox hitbox2 = {10, 10};
+	CompKinematics kin2 = {};
+	JUComponentVector comps2[] = {&pos2, &kin2, &visible2, &npc, &hitbox2};
+	juECSAddEntity(ENT_COMPS_NPC, comps2, ENT_COMPS_NPC_SIZE);
 
 	while (!stopRunning) {
 		juUpdate();
