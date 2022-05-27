@@ -188,12 +188,6 @@ int main() {
 	JUClock framerateTimer;
 	juClockReset(&framerateTimer);
 
-	// Setup camera
-	VK2DCamera cam = vk2dRendererGetCamera();
-	cam.w = WINDOW_WIDTH;
-	cam.h = WINDOW_HEIGHT;
-	vk2dRendererSetCamera(cam);
-
 	// Load resources
 	JULoader loader = juLoaderCreate(FILES, FILE_COUNT);
 	juECSAddComponents(COMPONENT_SIZES, COMPONENT_COUNT);
