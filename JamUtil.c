@@ -1583,6 +1583,7 @@ JUSprite juSpriteCreate(const char *filename, float x, float y, float w, float h
 		spr->scaleX = 1;
 		spr->scaleY = 1;
 		spr->delay = delay;
+		spr->rotation = 0;
 		spr->Internal.copy = false;
 	} else {
 		juLog("Could not create sprite from image \"%s\"", filename);
@@ -1608,6 +1609,7 @@ JUSprite juSpriteFrom(VK2DTexture tex, float x, float y, float w, float h, float
 	spr->scaleX = 1;
 	spr->scaleY = 1;
 	spr->delay = delay;
+	spr->rotation = 0;
 	spr->Internal.copy = true;
 
 	return spr;
