@@ -1635,8 +1635,8 @@ void juSpriteDraw(JUSprite spr, float x, float y) {
 
 	vk2dRendererDrawTexture(
 			spr->Internal.tex,
-			x - spr->originX,
-			y - spr->originY,
+			x - (spr->originX * spr->scaleX),
+			y - (spr->originY * spr->scaleY),
 			spr->scaleX,
 			spr->scaleY,
 			spr->rotation,
