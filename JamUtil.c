@@ -7,6 +7,7 @@
 #include <pthread.h>
 
 #define CUTE_SOUND_IMPLEMENTATION
+#define CUTE_SOUND_FORCE_SDL
 #include "cute_sound.h"
 #include "JamUtil.h"
 
@@ -289,9 +290,9 @@ void juInit(SDL_Window *window, int jobChannels, int minimumThreads) {
 	// Sound
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version)
-	SDL_GetWindowWMInfo(window, &wmInfo);
-	HWND hwnd = wmInfo.info.win.window;
-	gSoundContext = cs_make_context(hwnd, 41000, 1024 * 1024 * 10, 20, NULL);
+	//SDL_GetWindowWMInfo(window, &wmInfo);
+	//HWND hwnd = wmInfo.info.win.window;
+	gSoundContext = cs_make_context(NULL, 41000, 1024 * 1024 * 10, 20, NULL);
 	if (gSoundContext != NULL) {
 		cs_spawn_mix_thread(gSoundContext);
 	} else {
